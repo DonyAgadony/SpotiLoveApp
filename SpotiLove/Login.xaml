@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpotiLove.Login"
+             BackgroundColor="#121212">
+    <ScrollView>
+        <VerticalStackLayout
+            Margin="0,50,0,0"
+            Padding="30,20"
+            Spacing="30">
+
+            <!-- Header Section with Navigation -->
+            <FlexLayout Direction="Row"
+                        JustifyContent="SpaceBetween"
+                        AlignItems="Center"
+                        Margin="0,0,0,20">
+                <Button
+                    Text="← Back"
+                    FontSize="16"
+                    TextColor="#b3b3b3"
+                    BackgroundColor="Transparent"
+                    BorderWidth="0"/>
+
+                <Label
+                    Text="SpotiLove"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    TextColor="#1db954"
+                    HorizontalOptions="Center"/>
+
+                <Label Text="" Width="60"/>
+                <!-- Spacer for centering -->
+            </FlexLayout>
+
+            <!-- Tab Navigation -->
+            <FlexLayout Direction="Row"
+                        JustifyContent="Center"
+                        AlignItems="Center"
+                        Margin="0,0,0,30">
+                <Border
+                    BackgroundColor="Transparent"
+                    Padding="15,10"
+                    StrokeShape="RoundRectangle 20"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    Margin="5,0">
+                    <Label
+                        Text="Sign Up"
+                        FontSize="18"
+                        TextColor="#b3b3b3"
+                        HorizontalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnGoToSignUp" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Border>
+
+                <Frame
+                    BackgroundColor="#1db954"
+                    Padding="15,10"
+                    CornerRadius="20"
+                    BorderColor="Transparent"
+                    Margin="5,0">
+                    <Label
+                        Text="Login"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="#121212"
+                        HorizontalOptions="Center"/>
+                </Frame>
+            </FlexLayout>
+
+            <!-- Welcome Message -->
+            <VerticalStackLayout Spacing="10" Margin="0,0,0,20">
+                <Label
+                    Text="Welcome Back"
+                    FontSize="28"
+                    FontAttributes="Bold"
+                    TextColor="White"
+                    HorizontalOptions="Center"/>
+                <Label
+                    Text="Sign in to continue your music journey"
+                    FontSize="16"
+                    TextColor="#b3b3b3"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+            <!-- Form Fields -->
+            <VerticalStackLayout Spacing="20">
+                <!-- Email/Username Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        Placeholder="Email or username"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        Keyboard="Email"
+                        Margin="15,5"/>
+                </Border>
+
+                <!-- Password Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        Placeholder="Password"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        IsPassword="True"
+                        Margin="15,5"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Remember Me & Forgot Password -->
+            <FlexLayout Direction="Row"
+                        JustifyContent="SpaceBetween"
+                        AlignItems="Center"
+                        Margin="0,10,0,0">
+                <FlexLayout Direction="Row"
+                            AlignItems="Center">
+                    <CheckBox
+                        Color="#1db954"
+                        Margin="0,0,10,0"/>
+                    <Label
+                        Text="Remember me"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                </FlexLayout>
+
+                <Label
+                    Text="Forgot password?"
+                    FontSize="14"
+                    TextColor="#1db954">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer />
+                    </Label.GestureRecognizers>
+                </Label>
+            </FlexLayout>
+
+            <!-- Login Button -->
+            <Button
+                Text="Sign In"
+                FontSize="18"
+                FontAttributes="Bold"
+                TextColor="#121212"
+                BackgroundColor="#1db954"
+                CornerRadius="25"
+                HeightRequest="50"
+                Margin="0,20,0,0"/>
+
+            <!-- Divider -->
+            <FlexLayout Direction="Row"
+                        AlignItems="Center"
+                        Margin="0,20,0,10">
+                <BoxView
+                    BackgroundColor="#535353"
+                    HeightRequest="1"
+                    FlexLayout.Grow="1"/>
+                <Label
+                    Text="  or continue with  "
+                    TextColor="#b3b3b3"
+                    FontSize="14"/>
+                <BoxView
+                    BackgroundColor="#535353"
+                    HeightRequest="1"
+                    FlexLayout.Grow="1"/>
+            </FlexLayout>
+
+            <!-- Social Login Buttons -->
+            <VerticalStackLayout Spacing="15">
+                <Button
+                    Text="🔍 Continue with Google"
+                    FontSize="16"
+                    TextColor="White"
+                    BackgroundColor="#212121"
+                    CornerRadius="25"
+                    HeightRequest="45"/>
+
+                <Button
+                    Text="🍎 Continue with Apple"
+                    FontSize="16"
+                    TextColor="White"
+                    BackgroundColor="#212121"
+                    CornerRadius="25"
+                    HeightRequest="45"/>
+
+                <Button
+                    Text="♪ Continue with Spotify"
+                    FontSize="16"
+                    TextColor="White"
+                    BackgroundColor="#1db954"
+                    CornerRadius="25"
+                    HeightRequest="45"/>
+            </VerticalStackLayout>
+
+            <!-- Quick Access Options -->
+            <VerticalStackLayout Spacing="10" Margin="0,20,0,0">
+                <Label
+                    Text="Quick Access"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    TextColor="#b3b3b3"
+                    HorizontalOptions="Center"/>
+
+                <FlexLayout Direction="Row"
+                            JustifyContent="Center"
+                            Wrap="Wrap"
+                            AlignItems="Center">
+                    <Frame
+                        BackgroundColor="#212121"
+                        Padding="10,5"
+                        CornerRadius="15"
+                        Margin="5">
+                        <Label
+                            Text="Demo User"
+                            FontSize="12"
+                            TextColor="#b3b3b3"/>
+                    </Frame>
+
+                    <Frame
+                        BackgroundColor="#212121"
+                        Padding="10,5"
+                        CornerRadius="15"
+                        Margin="5">
+                        <Label
+                            Text="Guest Mode"
+                            FontSize="12"
+                            TextColor="#b3b3b3"/>
+                    </Frame>
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <!-- Footer -->
+            <Label
+                Text="Don't have an account? Sign Up"
+                FontSize="14"
+                TextColor="#1db954"
+                HorizontalOptions="Center"
+                Margin="0,30,0,20">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnGoToSignUp" />
+                </Label.GestureRecognizers>
+            </Label>
+
+            <!-- App Version -->
+            <Label
+                Text="SpotiLove v1.0"
+                FontSize="12"
+                TextColor="#535353"
+                HorizontalOptions="Center"
+                Margin="0,10,0,20"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

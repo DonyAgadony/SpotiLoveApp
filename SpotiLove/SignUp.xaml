@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpotiLove.SignUp"
+             BackgroundColor="#121212">
+    <ScrollView>
+        <VerticalStackLayout
+            Margin="0,50,0,0"
+            Padding="30,20"
+            Spacing="30">
+
+            <!-- Header Section with Navigation -->
+            <FlexLayout Direction="Row"
+                        JustifyContent="SpaceBetween"
+                        AlignItems="Center"
+                        Margin="0,0,0,20">
+                <Button
+                    Text="← Back"
+                    FontSize="16"
+                    TextColor="#b3b3b3"
+                    BackgroundColor="Transparent"
+                    BorderWidth="0"/>
+
+                <Label
+                    Text="SpotiLove"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    TextColor="#1db954"
+                    HorizontalOptions="Center"/>
+
+                <Label Text="" Width="60"/>
+                <!-- Spacer for centering -->
+            </FlexLayout>
+
+            <!-- Tab Navigation -->
+            <FlexLayout Direction="Row"
+                        JustifyContent="Center"
+                        AlignItems="Center"
+                        Margin="0,0,0,30">
+                <Frame
+                    BackgroundColor="#1db954"
+                    Padding="15,10"
+                    CornerRadius="20"
+                    BorderColor="Transparent"
+                    Margin="5,0">
+                    <Label
+                        Text="Sign Up"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="#121212"
+                        HorizontalOptions="Center"/>
+                </Frame>
+
+                <Border
+                    BackgroundColor="Transparent"
+                    Padding="15,10"
+                    StrokeShape="RoundRectangle 20"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    Margin="5,0">
+                    <Label
+                        Text="Login"
+                        FontSize="18"
+                        TextColor="#b3b3b3"
+                        HorizontalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnGoToLogin" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Border>
+            </FlexLayout>
+
+            <!-- Welcome Message -->
+            <VerticalStackLayout Spacing="10" Margin="0,0,0,20">
+                <Label
+                    Text="Create Your Account"
+                    FontSize="28"
+                    FontAttributes="Bold"
+                    TextColor="White"
+                    HorizontalOptions="Center"/>
+                <Label
+                    Text="Join SpotiLove to discover music with friends"
+                    FontSize="16"
+                    TextColor="#b3b3b3"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+            <!-- Form Fields -->
+            <VerticalStackLayout Spacing="20">
+                <!-- Email Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        Placeholder="Email address"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        Keyboard="Email"
+                        Margin="15,5"/>
+                </Border>
+
+                <!-- Username Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        Placeholder="Username"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        Margin="15,5"/>
+                </Border>
+
+                <!-- Password Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        Placeholder="Password"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        IsPassword="True"
+                        Margin="15,5"/>
+                </Border>
+
+                <!-- Confirm Password Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        Placeholder="Confirm password"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        IsPassword="True"
+                        Margin="15,5"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Terms and Conditions -->
+            <FlexLayout Direction="Row"
+                        AlignItems="Start"
+                        Margin="0,10,0,0">
+                <CheckBox
+                    Color="#1db954"
+                    Margin="0,0,10,0"/>
+                <Label
+                    Text="I agree to the Terms of Service and Privacy Policy"
+                    FontSize="14"
+                    TextColor="#b3b3b3"
+                    FlexLayout.Grow="1"/>
+            </FlexLayout>
+
+            <!-- Sign Up Button -->
+            <Button
+                Text="Create Account"
+                FontSize="18"
+                FontAttributes="Bold"
+                TextColor="#121212"
+                BackgroundColor="#1db954"
+                CornerRadius="25"
+                HeightRequest="50"
+                Margin="0,20,0,0"/>
+
+            <!-- Divider -->
+            <FlexLayout Direction="Row"
+                        AlignItems="Center"
+                        Margin="0,20,0,10">
+                <BoxView
+                    BackgroundColor="#535353"
+                    HeightRequest="1"
+                    FlexLayout.Grow="1"/>
+                <Label
+                    Text="  or  "
+                    TextColor="#b3b3b3"
+                    FontSize="14"/>
+                <BoxView
+                    BackgroundColor="#535353"
+                    HeightRequest="1"
+                    FlexLayout.Grow="1"/>
+            </FlexLayout>
+
+            <!-- Social Login Buttons -->
+            <VerticalStackLayout Spacing="15">
+                <Button
+                    Text="Continue with Google"
+                    FontSize="16"
+                    TextColor="White"
+                    BackgroundColor="#212121"
+                    CornerRadius="25"
+                    HeightRequest="45"/>
+
+                <Button
+                    Text="Continue with Apple"
+                    FontSize="16"
+                    TextColor="White"
+                    BackgroundColor="#212121"
+                    CornerRadius="25"
+                    HeightRequest="45"/>
+            </VerticalStackLayout>
+
+            <!-- Footer -->
+            <Label
+                Text="Already have an account? Login"
+                FontSize="14"
+                TextColor="#1db954"
+                HorizontalOptions="Center"
+                Margin="0,30,0,20">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnGoToLogin" />
+                </Label.GestureRecognizers>
+            </Label>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
