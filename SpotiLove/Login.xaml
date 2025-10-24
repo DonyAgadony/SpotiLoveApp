@@ -19,7 +19,8 @@
                     FontSize="16"
                     TextColor="#b3b3b3"
                     BackgroundColor="Transparent"
-                    BorderWidth="0"/>
+                    BorderWidth="0"
+                    Clicked="OnBackClicked"/>
 
                 <Label
                     Text="SpotiLove"
@@ -29,7 +30,6 @@
                     HorizontalOptions="Center"/>
 
                 <Label Text="" Width="60"/>
-                <!-- Spacer for centering -->
             </FlexLayout>
 
             <!-- Tab Navigation -->
@@ -96,6 +96,7 @@
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
                     <Entry
+                        x:Name="EmailEntry"
                         Placeholder="Email or username"
                         PlaceholderColor="#b3b3b3"
                         TextColor="White"
@@ -112,6 +113,7 @@
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
                     <Entry
+                        x:Name="PasswordEntry"
                         Placeholder="Password"
                         PlaceholderColor="#b3b3b3"
                         TextColor="White"
@@ -129,6 +131,7 @@
                 <FlexLayout Direction="Row"
                             AlignItems="Center">
                     <CheckBox
+                        x:Name="RememberMeCheckBox"
                         Color="#1db954"
                         Margin="0,0,10,0"/>
                     <Label
@@ -142,7 +145,7 @@
                     FontSize="14"
                     TextColor="#1db954">
                     <Label.GestureRecognizers>
-                        <TapGestureRecognizer />
+                        <TapGestureRecognizer Tapped="OnForgotPassword" />
                     </Label.GestureRecognizers>
                 </Label>
             </FlexLayout>
@@ -156,7 +159,8 @@
                 BackgroundColor="#1db954"
                 CornerRadius="25"
                 HeightRequest="50"
-                Margin="0,20,0,0"/>
+                Margin="0,20,0,0"
+                Clicked="OnSignIn"/>
 
             <!-- Divider -->
             <FlexLayout Direction="Row"
@@ -179,28 +183,13 @@
             <!-- Social Login Buttons -->
             <VerticalStackLayout Spacing="15">
                 <Button
-                    Text="🔍 Continue with Google"
-                    FontSize="16"
-                    TextColor="White"
-                    BackgroundColor="#212121"
-                    CornerRadius="25"
-                    HeightRequest="45"/>
-
-                <Button
-                    Text="🍎 Continue with Apple"
-                    FontSize="16"
-                    TextColor="White"
-                    BackgroundColor="#212121"
-                    CornerRadius="25"
-                    HeightRequest="45"/>
-
-                <Button
                     Text="♪ Continue with Spotify"
                     FontSize="16"
                     TextColor="White"
                     BackgroundColor="#1db954"
                     CornerRadius="25"
-                    HeightRequest="45"/>
+                    HeightRequest="45"
+                    Clicked="OnSpotifyLogin"/>
             </VerticalStackLayout>
 
             <!-- Quick Access Options -->
@@ -216,27 +205,7 @@
                             JustifyContent="Center"
                             Wrap="Wrap"
                             AlignItems="Center">
-                    <Frame
-                        BackgroundColor="#212121"
-                        Padding="10,5"
-                        CornerRadius="15"
-                        Margin="5">
-                        <Label
-                            Text="Demo User"
-                            FontSize="12"
-                            TextColor="#b3b3b3"/>
-                    </Frame>
 
-                    <Frame
-                        BackgroundColor="#212121"
-                        Padding="10,5"
-                        CornerRadius="15"
-                        Margin="5">
-                        <Label
-                            Text="Guest Mode"
-                            FontSize="12"
-                            TextColor="#b3b3b3"/>
-                    </Frame>
                 </FlexLayout>
             </VerticalStackLayout>
 

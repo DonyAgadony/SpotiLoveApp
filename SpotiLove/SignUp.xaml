@@ -19,7 +19,8 @@
                     FontSize="16"
                     TextColor="#b3b3b3"
                     BackgroundColor="Transparent"
-                    BorderWidth="0"/>
+                    BorderWidth="0"
+                    Clicked="OnBackClicked"/>
 
                 <Label
                     Text="SpotiLove"
@@ -29,7 +30,6 @@
                     HorizontalOptions="Center"/>
 
                 <Label Text="" Width="60"/>
-                <!-- Spacer for centering -->
             </FlexLayout>
 
             <!-- Tab Navigation -->
@@ -42,7 +42,8 @@
                     Padding="15,10"
                     CornerRadius="20"
                     BorderColor="Transparent"
-                    Margin="5,0">
+                    Margin="5,0"
+                    HasShadow="False">
                     <Label
                         Text="Sign Up"
                         FontSize="18"
@@ -88,6 +89,22 @@
 
             <!-- Form Fields -->
             <VerticalStackLayout Spacing="20">
+                <!-- Name Field -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Entry
+                        x:Name="NameEntry"
+                        Placeholder="Full name"
+                        PlaceholderColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        Margin="15,5"/>
+                </Border>
+
                 <!-- Email Field -->
                 <Border
                     BackgroundColor="#212121"
@@ -96,6 +113,7 @@
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
                     <Entry
+                        x:Name="EmailEntry"
                         Placeholder="Email address"
                         PlaceholderColor="#b3b3b3"
                         TextColor="White"
@@ -104,7 +122,7 @@
                         Margin="15,5"/>
                 </Border>
 
-                <!-- Username Field -->
+                <!-- Age Field -->
                 <Border
                     BackgroundColor="#212121"
                     Stroke="#535353"
@@ -112,11 +130,37 @@
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
                     <Entry
-                        Placeholder="Username"
+                        x:Name="AgeEntry"
+                        Placeholder="Age"
                         PlaceholderColor="#b3b3b3"
                         TextColor="White"
                         BackgroundColor="Transparent"
+                        Keyboard="Numeric"
                         Margin="15,5"/>
+                </Border>
+
+                <!-- Gender Picker -->
+                <Border
+                    BackgroundColor="#212121"
+                    Stroke="#535353"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="0">
+                    <Picker
+                        x:Name="GenderPicker"
+                        Title="Select Gender"
+                        TitleColor="#b3b3b3"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        Margin="10,5">
+                        <Picker.Items>
+                            <x:String>Male</x:String>
+                            <x:String>Female</x:String>
+                            <x:String>Non-binary</x:String>
+                            <x:String>Other</x:String>
+                            <x:String>Prefer not to say</x:String>
+                        </Picker.Items>
+                    </Picker>
                 </Border>
 
                 <!-- Password Field -->
@@ -127,7 +171,8 @@
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
                     <Entry
-                        Placeholder="Password"
+                        x:Name="PasswordEntry"
+                        Placeholder="Password (min. 6 characters)"
                         PlaceholderColor="#b3b3b3"
                         TextColor="White"
                         BackgroundColor="Transparent"
@@ -143,6 +188,7 @@
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
                     <Entry
+                        x:Name="ConfirmPasswordEntry"
                         Placeholder="Confirm password"
                         PlaceholderColor="#b3b3b3"
                         TextColor="White"
@@ -157,13 +203,35 @@
                         AlignItems="Start"
                         Margin="0,10,0,0">
                 <CheckBox
+                    x:Name="TermsCheckBox"
                     Color="#1db954"
                     Margin="0,0,10,0"/>
                 <Label
-                    Text="I agree to the Terms of Service and Privacy Policy"
-                    FontSize="14"
                     TextColor="#b3b3b3"
-                    FlexLayout.Grow="1"/>
+                    FlexLayout.Grow="1">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="I agree to the " FontSize="14"/>
+                            <Span Text="Terms of Service" 
+                                  FontSize="14" 
+                                  TextColor="#1db954"
+                                  TextDecorations="Underline">
+                                <Span.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnTermsClicked"/>
+                                </Span.GestureRecognizers>
+                            </Span>
+                            <Span Text=" and " FontSize="14"/>
+                            <Span Text="Privacy Policy" 
+                                  FontSize="14" 
+                                  TextColor="#1db954"
+                                  TextDecorations="Underline">
+                                <Span.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnPrivacyClicked"/>
+                                </Span.GestureRecognizers>
+                            </Span>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
             </FlexLayout>
 
             <!-- Sign Up Button -->
@@ -175,7 +243,8 @@
                 BackgroundColor="#1db954"
                 CornerRadius="25"
                 HeightRequest="50"
-                Margin="0,20,0,0"/>
+                Margin="0,20,0,0"
+                Clicked="OnCreateAccount"/>
 
             <!-- Divider -->
             <FlexLayout Direction="Row"
@@ -186,7 +255,7 @@
                     HeightRequest="1"
                     FlexLayout.Grow="1"/>
                 <Label
-                    Text="  or  "
+                    Text="  or sign up with  "
                     TextColor="#b3b3b3"
                     FontSize="14"/>
                 <BoxView
@@ -198,20 +267,31 @@
             <!-- Social Login Buttons -->
             <VerticalStackLayout Spacing="15">
                 <Button
-                    Text="Continue with Google"
+                    Text="🔍 Continue with Google"
                     FontSize="16"
                     TextColor="White"
                     BackgroundColor="#212121"
                     CornerRadius="25"
-                    HeightRequest="45"/>
+                    HeightRequest="45"
+                    Clicked="OnGoogleSignUp"/>
 
                 <Button
-                    Text="Continue with Apple"
+                    Text="🍎 Continue with Apple"
                     FontSize="16"
                     TextColor="White"
                     BackgroundColor="#212121"
                     CornerRadius="25"
-                    HeightRequest="45"/>
+                    HeightRequest="45"
+                    Clicked="OnAppleSignUp"/>
+
+                <Button
+                    Text="♪ Continue with Spotify"
+                    FontSize="16"
+                    TextColor="White"
+                    BackgroundColor="#1db954"
+                    CornerRadius="25"
+                    HeightRequest="45"
+                    Clicked="OnSpotifySignUp"/>
             </VerticalStackLayout>
 
             <!-- Footer -->

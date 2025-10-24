@@ -1,10 +1,9 @@
-﻿using System.Threading.Tasks;
-
+﻿using System.Net.Http.Json;
+using System.Threading.Tasks;
 namespace SpotiLove;
 
 public partial class MainPage : ContentPage
 {
-    int count = 0;
     List<UserDto> test = null;
     private readonly Dictionary<string, ImageSource> _imageCache = new Dictionary<string, ImageSource>();
 
@@ -17,7 +16,18 @@ public partial class MainPage : ContentPage
 
     private async void MainPage_Loaded(object sender, EventArgs e)
     {
-        await Test();
+        System.Diagnostics.Debug.WriteLine($"UserData.Current: {UserData.Current?.Id}");
+        if (UserData.Current!= null)
+        {
+            UserDto currentUserDto = new UserDto();
+            currentUserDto.Id = UserData.Current.Id;
+            await Test(currentUserDto);
+        }
+        else
+        {
+            await DisplayAlert("Error", "User data not found. Please log in again.", "OK");
+            await Shell.Current.GoToAsync("//Login");
+        }
     }
 
     // Navigate to SignUp page
@@ -34,17 +44,16 @@ public partial class MainPage : ContentPage
     }
 
     // Initialize and load user data from API
-    async Task Test()
+    async Task Test(UserDto currentDTO)
     {
         try
         {
-            test = await SpotiLoveAPIService.GetSwipes();
+            UserDto currentUserDto = new UserDto();
+            currentUserDto.Id = UserData.Current.Id;
+            test = await SpotiLoveAPIService.GetSwipes(currentUserDto);
             if (test != null && test.Count > 0)
             {
                 await UpdateUserDisplay(test[0]);
-
-                // Preload next few images in background
-                _ = Task.Run(() => PreloadImages());
             }
             else
             {
@@ -62,90 +71,49 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Preload images for better performance
-    private async Task PreloadImages()
-    {
-        try
-        {
-            if (test == null || test.Count <= 1) return;
-
-            // Preload next 3-5 user images
-            var imagesToPreload = test.Skip(1).Take(5);
-
-            var preloadTasks = new List<Task>();
-
-            foreach (var user in imagesToPreload)
-            {
-                if (user?.Images != null && user.Images.Count > 0)
-                {
-                    foreach (var imageUrl in user.Images.Take(1)) // Just preload first image per user
-                    {
-                        if (!string.IsNullOrWhiteSpace(imageUrl))
-                        {
-                            preloadTasks.Add(PreloadSingleImage(imageUrl));
-                        }
-                    }
-                }
-            }
-
-            if (preloadTasks.Count > 0)
-            {
-                await Task.WhenAll(preloadTasks);
-            }
-        }
-        catch (Exception ex)
-        {
-            // Silently handle preload errors - don't show to user
-            System.Diagnostics.Debug.WriteLine($"Preload error: {ex.Message}");
-        }
-    }
-
-    // Preload a single image into cache
-    private async Task PreloadSingleImage(string imageUrl)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(imageUrl) || _imageCache.ContainsKey(imageUrl))
-                return;
-
-            // Create ImageSource and cache it
-            var imageSource = ImageSource.FromUri(new Uri(imageUrl));
-            _imageCache[imageUrl] = imageSource;
-
-            // Small delay to allow image to start loading
-            await Task.Delay(50);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to preload image {imageUrl}: {ex.Message}");
-        }
-    }
-
     // Handle Like button click
     private async void LIKE_Clicked(object sender, EventArgs e)
     {
-        try
+        if (test != null && test.Count > 0)
         {
-            await LoadNextUser();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Like error: {ex.Message}");
-            await DisplayAlert("Error", $"Something went wrong: {ex.Message}", "OK");
+            var current = UserData.Current.Id;
+            var target = test[0].Id;
+
+            using var client = new HttpClient { BaseAddress = new Uri("https://spotilove-2.onrender.com/") };
+            var response = await client.PostAsJsonAsync("/swipe", new LikeDto(current, target, true));
+            var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
+
+            if (result != null && result.Success)
+            {
+                await LoadNextUser();
+            }
+            else
+            {
+                await DisplayAlert("Error", "Failed to like user", "OK");
+            }
         }
     }
 
     // Handle Dislike button click
     private async void Dislike_Clicked(object sender, EventArgs e)
     {
-        try
+        if (test != null && test.Count > 0)
         {
-            await LoadNextUser();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Dislike error: {ex.Message}");
-            await DisplayAlert("Error", $"Something went wrong: {ex.Message}", "OK");
+            var current = UserData.Current.Id;
+            var target = test[0].Id;
+
+            using var client = new HttpClient { BaseAddress = new Uri("https://spotilove-2.onrender.com/") };
+            var response = await client.PostAsJsonAsync("/swipe", new LikeDto(current, target, false));
+            var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
+
+            if (result != null && result.Success)
+            {
+                await LoadNextUser();
+            }
+            else
+            {
+                await DisplayAlert("Error", "Failed to dislike user", "OK");
+            }
         }
     }
 
@@ -163,21 +131,20 @@ public partial class MainPage : ContentPage
             {
                 await UpdateUserDisplay(test[0]);
 
-                // Continue preloading more images in background
-                _ = Task.Run(() => PreloadImages());
             }
             else
             {
                 // Reload users from API when list is empty
                 try
                 {
-                    test = await SpotiLoveAPIService.GetSwipes();
+                    UserDto currentDTO = new UserDto();
+                    currentDTO.Id = UserData.Current.Id;
+                    test = await SpotiLoveAPIService.GetSwipes(currentDTO);
                     if (test != null && test.Count > 0)
                     {
                         await UpdateUserDisplay(test[0]);
 
                         // Preload images for new batch
-                        _ = Task.Run(() => PreloadImages());
                     }
                     else
                     {
@@ -269,6 +236,7 @@ public partial class MainPage : ContentPage
                     // if (!string.IsNullOrEmpty(user.Age)) 
                     //     NameLabel.Text += $", {user.Age}";
                 }
+
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"UI Update error: {ex.Message}");
@@ -278,21 +246,6 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"UpdateUserDisplay error: {ex.Message}");
-        }
-    }
-
-    // Handle Super Like button (if you want to add this functionality)
-    private async void SuperLike_Clicked(object sender, EventArgs e)
-    {
-        try
-        {
-            await DisplayAlert("Super Like!", "You super liked this user! ⭐", "Continue");
-            await LoadNextUser();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"SuperLike error: {ex.Message}");
-            await DisplayAlert("Error", $"Something went wrong: {ex.Message}", "OK");
         }
     }
 }

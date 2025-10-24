@@ -9,14 +9,13 @@ namespace SpotiLove
 {
     class SpotiLoveAPIService
     {
-        static public async Task<List<UserDto>?> GetSwipes()
+        static public async Task<List<UserDto>?> GetSwipes(UserDto current)
         {
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://192.168.25.86:5106"); // your API base URL
+            client.BaseAddress = new Uri("https://spotilove-2.onrender.com"); // your API base URL
 
             // Call the endpoint
-            var response = await client.GetFromJsonAsync<TakeExUsersResponse>("/takeExUsers?count=10");
-
+            var response = await client.GetFromJsonAsync<TakeExUsersResponse>($"/users?userId={current.Id}");
             if (response != null && response.Success)
             {
                 Console.WriteLine($"✅ Retrieved {response.Count} users from API:\n");
@@ -38,13 +37,13 @@ namespace SpotiLove
             return null;
         }
 
-        static public async Task SendDislike()
+        static public async Task SendDislike(UserDto current)
         {
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5106"); // your API base URL
+            client.BaseAddress = new Uri("https://spotilove-2.onrender.com"); // your API base URL
 
             // Call the endpoint
-            var response = await client.GetFromJsonAsync<ResponseMessage>("/dislikeUser");
+            var response = await client.GetFromJsonAsync<ResponseMessage>($"/dislikeUser?id={current.Id}");
 
             if (response != null && response.Success)
             {
