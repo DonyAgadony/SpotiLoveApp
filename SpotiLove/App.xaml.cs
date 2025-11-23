@@ -35,5 +35,16 @@
             }
         }
 
+    protected override async void OnAppLinkRequestReceived(Uri uri)
+        {
+            base.OnAppLinkRequestReceived(uri);
+
+            if (uri.Scheme == "spotilove" && uri.Host == "auth")
+            {
+                await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
+            }
+        }
     }
-}
+    }
+   
+

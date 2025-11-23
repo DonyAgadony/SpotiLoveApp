@@ -3,298 +3,217 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SpotiLove.MainPage"
              BackgroundColor="#121212">
-    <Grid>
-        <!-- Background Gradient Effect -->
+
+    <Grid RowDefinitions="Auto,*,Auto">
         <BoxView
+            Grid.RowSpan="3"
             BackgroundColor="#1db954"
             Opacity="0.1"
             VerticalOptions="Start"
-            HeightRequest="300"/>
+            HeightRequest="300" />
 
-        <ScrollView>
-            <VerticalStackLayout
-                Margin="0,20,0,0"
-                Padding="20"
-                Spacing="30">
+        <Grid Padding="20,20,20,10" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-                <!-- Header Section -->
-                <FlexLayout Direction="Row"
-                            JustifyContent="SpaceBetween"
-                            AlignItems="Center"
-                            Margin="0,20,0,0">
-                    <VerticalStackLayout Spacing="5">
-                        <Label
-                            Text="Good Evening"
-                            FontSize="16"
-                            TextColor="#b3b3b3"/>
-                        <FlexLayout Direction="Row" AlignItems="Center">
-                            <Label
-                                Text="SpotiLove"
-                                FontSize="28"
-                                FontAttributes="Bold"
-                                TextColor="#1db954"
-                                Margin="0,0,10,0"/>
-                            <Image
-                                Source="spotilove_logo.png"
-                                HeightRequest="32"
-                                WidthRequest="32"/>
-                        </FlexLayout>
-                    </VerticalStackLayout>
+            <HorizontalStackLayout Spacing="8" Grid.Column="0" VerticalOptions="Center">
+                <Label
+                    Text="SpotiLove"
+                    FontSize="28"
+                    FontAttributes="Bold"
+                    TextColor="#1db954"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Start"
+                    LineBreakMode="NoWrap" />
+                <Image
+                    Source="spotilove_logo.png"
+                    HeightRequest="30"
+                    WidthRequest="30"
+                    Aspect="AspectFit"
+                    VerticalOptions="Center" />
+            </HorizontalStackLayout>
 
-                    <FlexLayout Direction="Row" AlignItems="Center">
-                        <Frame
-                            BackgroundColor="#212121"
-                            Padding="8"
-                            CornerRadius="20"
-                            Margin="5,0">
-                            <Label
-                                Text="🔔"
-                                FontSize="20"/>
-                        </Frame>
-                        <Frame
-                            BackgroundColor="#212121"
-                            Padding="8"
-                            CornerRadius="20"
-                            Margin="5,0">
-                            <Label
-                                Text="⚙️"
-                                FontSize="20"/>
-                        </Frame>
-                    </FlexLayout>
-                </FlexLayout>
+            <Button
+                x:Name="DisconnectButton"
+                Grid.Column="1"
+                Text="Logout"
+                Clicked="OnDisconnect"
+                BackgroundColor="#dc3545"
+                TextColor="White"
+                FontSize="14"
+                FontAttributes="Bold"
+                CornerRadius="20"
+                Padding="20,10"
+                VerticalOptions="Center"
+                HorizontalOptions="End" />
+        </Grid>
 
-                <!-- Main Discovery Card -->
+        <ScrollView Grid.Row="1" Padding="20,0">
+            <Grid VerticalOptions="Center">
                 <Frame
                     BackgroundColor="#212121"
                     CornerRadius="20"
                     Padding="0"
                     HasShadow="True"
-                    Margin="0,10,0,0">
+                    VerticalOptions="Center">
                     <VerticalStackLayout Spacing="0">
 
-                        <!-- Card Header -->
                         <FlexLayout Direction="Row"
                                     JustifyContent="SpaceBetween"
                                     AlignItems="Center"
-                                    Padding="20,20,20,10">
+                                    Padding="20,15,20,10">
                             <Label
                                 Text="Discover New Music"
-                                FontSize="18"
+                                FontSize="16"
                                 FontAttributes="Bold"
-                                TextColor="White"/>
+                                TextColor="White" />
                             <Label
                                 Text="💫"
-                                FontSize="20"/>
+                                FontSize="18" />
                         </FlexLayout>
 
-                        <!-- User Profile Image Container -->
                         <Frame
                             BackgroundColor="#121212"
                             CornerRadius="15"
-                            Padding="20"
-                            Margin="20,0,20,0">
-                            <VerticalStackLayout Spacing="15" HorizontalOptions="Center">
+                            Padding="15"
+                            Margin="15,0,15,0">
+                            <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
 
-                                <!-- Profile Image with Border -->
                                 <Border
                                     StrokeShape="RoundRectangle 100"
                                     Stroke="#1db954"
                                     StrokeThickness="3"
                                     BackgroundColor="#535353"
-                                    HeightRequest="200"
-                                    WidthRequest="200"
+                                    HeightRequest="160"
+                                    WidthRequest="160"
                                     HorizontalOptions="Center">
                                     <Image
                                         x:Name="UserSuggestionImage"
                                         Source="images.png"
                                         Aspect="AspectFill"
                                         VerticalOptions="Center"
-                                        HorizontalOptions="Center"/>
+                                        HorizontalOptions="Center" />
                                 </Border>
 
-                                <!-- User Info -->
-                                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
                                     <Label
                                         x:Name="NameLabel"
                                         Text="Alex Johnson, 24"
-                                        FontSize="22"
+                                        FontSize="20"
                                         FontAttributes="Bold"
                                         TextColor="White"
-                                        HorizontalOptions="Center"/>
+                                        HorizontalOptions="Center" />
 
                                     <Label
-                                        Text="2.3 km away • Online now"
-                                        FontSize="14"
+                                        x:Name="LocationLabel"
+                                        Text="2.3 km away"
+                                        FontSize="12"
                                         TextColor="#b3b3b3"
-                                        HorizontalOptions="Center"/>
+                                        HorizontalOptions="Center" />
 
-                                    <!-- Music Tags -->
-                                    <FlexLayout Direction="Row"
-                                                JustifyContent="Center"
-                                                Wrap="Wrap"
-                                                AlignItems="Center"
-                                                Margin="0,10,0,0">
-                                        <Frame
-                                            BackgroundColor="#1db954"
-                                            Padding="8,4"
-                                            CornerRadius="12"
-                                            Margin="3">
-                                            <Label
-                                                Text="Pop"
-                                                FontSize="12"
-                                                TextColor="White"/>
-                                        </Frame>
-                                        <Frame
-                                            BackgroundColor="#535353"
-                                            Padding="8,4"
-                                            CornerRadius="12"
-                                            Margin="3">
-                                            <Label
-                                                Text="Indie Rock"
-                                                FontSize="12"
-                                                TextColor="White"/>
-                                        </Frame>
-                                        <Frame
-                                            BackgroundColor="#535353"
-                                            Padding="8,4"
-                                            CornerRadius="12"
-                                            Margin="3">
-                                            <Label
-                                                Text="Electronic"
-                                                FontSize="12"
-                                                TextColor="White"/>
-                                        </Frame>
+                                    <FlexLayout
+                                        x:Name="GenreTagsContainer"
+                                        Direction="Row"
+                                        JustifyContent="Center"
+                                        Wrap="Wrap"
+                                        AlignItems="Center"
+                                        Margin="0,8,0,0">
                                     </FlexLayout>
 
-                                    <!-- Currently Playing -->
                                     <Border
+                                        x:Name="BioContainer"
                                         StrokeShape="RoundRectangle 10"
-                                        Stroke="#1db954"
+                                        Stroke="#535353"
                                         StrokeThickness="1"
-                                        BackgroundColor="#212121"
-                                        Padding="15,10"
-                                        Margin="0,15,0,0">
-                                        <FlexLayout Direction="Row" AlignItems="Center">
+                                        BackgroundColor="#1a1a1a"
+                                        Padding="12,10"
+                                        Margin="0,10,0,0"
+                                        MaximumWidthRequest="300">
+                                        <VerticalStackLayout Spacing="4">
                                             <Label
-                                                Text="🎵"
-                                                FontSize="16"
-                                                Margin="0,0,8,0"/>
-                                            <VerticalStackLayout Spacing="2">
-                                                <Label
-                                                    Text="Currently Playing"
-                                                    FontSize="12"
-                                                    TextColor="#b3b3b3"/>
-                                                <Label
-                                                    Text="Blinding Lights - The Weeknd"
-                                                    FontSize="14"
-                                                    FontAttributes="Bold"
-                                                    TextColor="White"/>
-                                            </VerticalStackLayout>
-                                        </FlexLayout>
+                                                Text="About"
+                                                FontSize="10"
+                                                FontAttributes="Bold"
+                                                TextColor="#1db954"
+                                                HorizontalOptions="Start" />
+                                            <Label
+                                                x:Name="BioLabel"
+                                                Text="Music lover and adventure seeker 🎵✨"
+                                                FontSize="12"
+                                                TextColor="#e0e0e0"
+                                                LineBreakMode="WordWrap"
+                                                MaxLines="3"
+                                                HorizontalOptions="Center"
+                                                HorizontalTextAlignment="Center" />
+                                        </VerticalStackLayout>
                                     </Border>
                                 </VerticalStackLayout>
                             </VerticalStackLayout>
                         </Frame>
-
-                        <!-- Action Buttons -->
                         <FlexLayout Direction="Row"
                                     JustifyContent="Center"
                                     AlignItems="Center"
-                                    Padding="30,20,30,30"
+                                    Padding="20,15,20,20"
                                     Wrap="NoWrap">
 
-                            <!-- Dislike Button -->
                             <Frame
                                 BackgroundColor="#535353"
                                 CornerRadius="30"
                                 Padding="0"
-                                HeightRequest="60"
-                                WidthRequest="60"
-                                Margin="20,0">
+                                HeightRequest="55"
+                                WidthRequest="55"
+                                Margin="15,0">
                                 <Button
                                     x:Name="Dislike"
                                     Clicked="Dislike_Clicked"
                                     Text="✕"
-                                    FontSize="24"
+                                    FontSize="22"
                                     TextColor="White"
                                     BackgroundColor="Transparent"
-                                    CornerRadius="30"/>
+                                    CornerRadius="30" />
                             </Frame>
 
-                            <!-- Like Button -->
                             <Frame
                                 BackgroundColor="#1db954"
                                 CornerRadius="30"
                                 Padding="0"
-                                HeightRequest="60"
-                                WidthRequest="60"
-                                Margin="20,0">
+                                HeightRequest="55"
+                                WidthRequest="55"
+                                Margin="15,0">
                                 <Button
                                     x:Name="LIKE"
                                     Clicked="LIKE_Clicked"
                                     Text="♥"
-                                    FontSize="24"
+                                    FontSize="22"
                                     TextColor="White"
                                     BackgroundColor="Transparent"
-                                    CornerRadius="30"/>
+                                    CornerRadius="30" />
                             </Frame>
                         </FlexLayout>
                     </VerticalStackLayout>
                 </Frame>
-
-                <!-- Quick Actions -->
-                <FlexLayout Direction="Row"
-                            JustifyContent="SpaceBetween"
-                            AlignItems="Center"
-                            Margin="0,20,0,0">
-
-                    <Frame
-                        BackgroundColor="#212121"
-                        CornerRadius="15"
-                        Padding="15"
-                        FlexLayout.Grow="1"
-                        Margin="0,0,10,0">
-                        <FlexLayout Direction="Row" AlignItems="Center">
-                            <Label
-                                Text="🎧"
-                                FontSize="20"
-                                Margin="0,0,10,0"/>
-                            <VerticalStackLayout Spacing="2">
-                                <Label
-                                    Text="My Matches"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    TextColor="White"/>
-                                <Label
-                                    Text="View connections"
-                                    FontSize="12"
-                                    TextColor="#b3b3b3"/>
-                            </VerticalStackLayout>
-                        </FlexLayout>
-                    </Frame>
-
-                 </FlexLayout>
-
-                 <!-- Footer Navigation -->
-                <Border
-                    StrokeShape="RoundRectangle 5"
-                    Stroke="#1db954"
-                    StrokeThickness="1"
-                    BackgroundColor="Transparent"
-                    Padding="15"
-                    Margin="0,20,0,20">
-                    <Label
-                        Text="Need to create an account? Go to SignUp →"
-                        TextColor="#1db954"
-                        FontSize="16"
-                        HorizontalOptions="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnGoToSignUp" />
-                        </Label.GestureRecognizers>
-                    </Label>
-                </Border>
-
-            </VerticalStackLayout>
+            </Grid>
         </ScrollView>
+
+        <Border
+            Grid.Row="2"
+            StrokeShape="RoundRectangle 5"
+            Stroke="#1db954"
+            StrokeThickness="1"
+            BackgroundColor="Transparent"
+            Padding="12"
+            Margin="20,0,20,20">
+            <Label
+                Text="Need to create an account? Go to SignUp →"
+                TextColor="#1db954"
+                FontSize="14"
+                HorizontalOptions="Center">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnGoToSignUp" />
+                </Label.GestureRecognizers>
+            </Label>
+        </Border>
     </Grid>
 </ContentPage>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpotiLove.ArtistSelectionPage"
+             BackgroundColor="#121212">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20">
+
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,20,0,30">
+            <Label
+                Text="Choose Your Favorite Artists"
+                FontSize="28"
+                FontAttributes="Bold"
+                TextColor="White"
+                HorizontalOptions="Center"/>
+            <Label
+                Text="Select at least 3 artists you love"
+                FontSize="16"
+                TextColor="#b3b3b3"
+                HorizontalOptions="Center"/>
+            <Label
+                x:Name="SelectedCountLabel"
+                Text="0 selected"
+                FontSize="14"
+                TextColor="#1db954"
+                HorizontalOptions="Center"
+                Margin="0,5,0,0"/>
+        </VerticalStackLayout>
+
+        <!-- Search Bar -->
+        <Border
+            Grid.Row="1"
+            BackgroundColor="#212121"
+            Stroke="#535353"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 25"
+            Margin="0,0,0,20">
+            <SearchBar
+                x:Name="ArtistSearchBar"
+                Placeholder="Search for artists..."
+                PlaceholderColor="#b3b3b3"
+                TextColor="White"
+                BackgroundColor="Transparent"
+                SearchButtonPressed="OnSearchArtists"/>
+        </Border>
+
+        <!-- Artists Grid -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Spacing="15">
+                <!-- Popular Artists Section -->
+                <Label
+                    Text="Popular Artists"
+                    FontSize="20"
+                    FontAttributes="Bold"
+                    TextColor="White"
+                    Margin="0,0,0,10"/>
+
+                <CollectionView
+                    x:Name="ArtistsCollection"
+                    SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout 
+                            Orientation="Vertical" 
+                            Span="2" 
+                            HorizontalItemSpacing="15"
+                            VerticalItemSpacing="15"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame
+                                BackgroundColor="#212121"
+                                CornerRadius="15"
+                                Padding="0"
+                                HasShadow="False"
+                                BorderColor="{Binding BorderColor}"
+                                HeightRequest="200">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArtistTapped" CommandParameter="{Binding .}"/>
+                                </Frame.GestureRecognizers>
+                                <Grid RowDefinitions="*,Auto">
+                                    <!-- Artist Image -->
+                                    <Image
+                                        Grid.Row="0"
+                                        Source="{Binding ImageUrl}"
+                                        Aspect="AspectFill"
+                                        HeightRequest="140"/>
+
+                                    <!-- Artist Name -->
+                                    <VerticalStackLayout
+                                        Grid.Row="1"
+                                        Padding="10"
+                                        Spacing="5">
+                                        <Label
+                                            Text="{Binding Name}"
+                                            FontSize="14"
+                                            FontAttributes="Bold"
+                                            TextColor="White"
+                                            LineBreakMode="TailTruncation"
+                                            MaxLines="1"/>
+
+                                        <!-- Checkmark for selected -->
+                                        <Label
+                                            Text="✓ Selected"
+                                            FontSize="12"
+                                            TextColor="#1db954"
+                                            IsVisible="{Binding IsSelected}"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator
+                    x:Name="LoadingIndicator"
+                    IsRunning="False"
+                    IsVisible="False"
+                    Color="#1db954"
+                    HeightRequest="50"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Next Button -->
+        <Button
+            x:Name="NextButton"
+            Grid.Row="3"
+            Text="Continue"
+            FontSize="18"
+            FontAttributes="Bold"
+            TextColor="#121212"
+            BackgroundColor="#1db954"
+            CornerRadius="25"
+            HeightRequest="50"
+            Margin="0,20,0,10"
+            IsEnabled="False"
+            Clicked="OnNextClicked"/>
+    </Grid>
+</ContentPage>

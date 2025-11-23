@@ -8,7 +8,7 @@ namespace SpotiLove;
 public partial class Login : ContentPage
 {
     private readonly HttpClient _httpClient;
-    private const string API_BASE_URL = "https://spotilove-2.onrender.com"; // your API url
+    private const string API_BASE_URL = "https://spotilove-2.onrender.com";
 
     public Login()
     {
@@ -41,7 +41,6 @@ public partial class Login : ContentPage
         ContentPage loadingPage = null!;
         try
         {
-            // Show a lightweight modal loader
             loadingPage = new ContentPage
             {
                 Content = new VerticalStackLayout
@@ -51,8 +50,8 @@ public partial class Login : ContentPage
                     Spacing = 20,
                     Children =
                     {
-                        new ActivityIndicator { IsRunning = true, WidthRequest = 50, HeightRequest = 50 },
-                        new Label { Text = "Signing in...", FontSize = 16 }
+                        new ActivityIndicator { IsRunning = true, Color = Color.FromArgb("#1db954"), WidthRequest = 50, HeightRequest = 50 },
+                        new Label { Text = "Signing in...", TextColor = Colors.White, FontSize = 16 }
                     }
                 },
                 BackgroundColor = Color.FromArgb("#121212")
@@ -71,8 +70,6 @@ public partial class Login : ContentPage
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync("/auth/login", content);
-
-            // pop loader
             await Navigation.PopModalAsync(false);
 
             if (!response.IsSuccessStatusCode)
@@ -96,7 +93,6 @@ public partial class Login : ContentPage
 
             if (loginResponse?.Success == true && loginResponse.User != null)
             {
-                // Set global shared UserData
                 UserData.Current = new UserData
                 {
                     Id = loginResponse.User.Id,
@@ -105,7 +101,6 @@ public partial class Login : ContentPage
                     Age = loginResponse.User.Age
                 };
 
-                // Persist for next app start
                 await SecureStorage.SetAsync("user_id", UserData.Current.Id.ToString());
                 if (!string.IsNullOrEmpty(UserData.Current.Name))
                     await SecureStorage.SetAsync("user_name", UserData.Current.Name);
@@ -115,9 +110,6 @@ public partial class Login : ContentPage
                 if (!string.IsNullOrEmpty(loginResponse.Token))
                     await SecureStorage.SetAsync("auth_token", loginResponse.Token);
 
-                System.Diagnostics.Debug.WriteLine($"Login success. UserId={UserData.Current.Id}");
-
-                // Navigate once
                 await Shell.Current.GoToAsync("//MainPage");
                 return;
             }
@@ -138,6 +130,52 @@ public partial class Login : ContentPage
         }
     }
 
+    private async void OnSpotifyLogin(object sender, EventArgs e)
+    {
+        try
+        {
+            var spotifyLoginUrl = $"{API_BASE_URL}/auth/spotify/login";
+
+            var loadingPage = new ContentPage
+            {
+                Content = new VerticalStackLayout
+                {
+                    VerticalOptions = LayoutOptions.Center,
+                    HorizontalOptions = LayoutOptions.Center,
+                    Spacing = 20,
+                    Children =
+                {
+                    new ActivityIndicator { IsRunning = true, Color = Color.FromArgb("#1db954"), WidthRequest = 50, HeightRequest = 50 },
+                    new Label { Text = "Connecting to Spotify...", TextColor = Colors.White, FontSize = 16 }
+                }
+                },
+                BackgroundColor = Color.FromArgb("#121212")
+            };
+
+            await Navigation.PushModalAsync(loadingPage, false);
+
+            // Open Spotify login
+            var success = await Browser.OpenAsync(spotifyLoginUrl, BrowserLaunchMode.SystemPreferred);
+
+            await Navigation.PopModalAsync(false);
+
+            if (!success)
+            {
+                await DisplayAlert("Error", "Could not open Spotify login page.", "OK");
+                return;
+            }
+
+            await DisplayAlert("Spotify Login",
+                "After authorizing with Spotify, you'll be automatically signed in.",
+                "OK");
+
+            await Shell.Current.GoToAsync("//MainPage");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Unable to connect to Spotify: {ex.Message}", "OK");
+        }
+    }
     private async void OnForgotPassword(object sender, EventArgs e)
     {
         var email = await DisplayPromptAsync("Forgot Password", "Enter your email address:", "Send Reset Link", "Cancel", keyboard: Keyboard.Email);
@@ -164,21 +202,7 @@ public partial class Login : ContentPage
     private async void OnBackClicked(object sender, EventArgs e) => await Shell.Current.GoToAsync("..");
     private async void OnGoogleLogin(object sender, EventArgs e) => await DisplayAlert("Google Login", "Coming soon", "OK");
     private async void OnAppleLogin(object sender, EventArgs e) => await DisplayAlert("Apple Login", "Coming soon", "OK");
-    private async void OnSpotifyLogin(object sender, EventArgs e)
-    {
-        try
-        {
-            var spotifyLoginUrl = $"{API_BASE_URL}/login";
-            await Browser.OpenAsync(spotifyLoginUrl, BrowserLaunchMode.SystemPreferred);
-            await DisplayAlert("Spotify Login", "After authorizing with Spotify, you'll be redirected back to the app.", "OK");
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"Unable to open Spotify login: {ex.Message}", "OK");
-        }
-    }
 
-    // quick demo/guest handlers
     private async void OnDemoUser(object sender, EventArgs e)
     {
         EmailEntry.Text = "demo@spotilove.com";
@@ -196,7 +220,6 @@ public partial class Login : ContentPage
         }
     }
 
-    // Response models (use shared UserDto if you prefer; using UserDto for deserialization)
     private class LoginResponse
     {
         public bool Success { get; set; }

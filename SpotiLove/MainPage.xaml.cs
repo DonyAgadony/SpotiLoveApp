@@ -1,5 +1,4 @@
 ﻿using System.Net.Http.Json;
-using System.Threading.Tasks;
 namespace SpotiLove;
 
 public partial class MainPage : ContentPage
@@ -10,27 +9,82 @@ public partial class MainPage : ContentPage
     public MainPage()
     {
         InitializeComponent();
-        // Delay initial load to ensure UI is ready
         Loaded += MainPage_Loaded;
     }
 
     private async void MainPage_Loaded(object sender, EventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"UserData.Current: {UserData.Current?.Id}");
-        if (UserData.Current!= null)
+        System.Diagnostics.Debug.WriteLine("=== MainPage_Loaded Started ===");
+        System.Diagnostics.Debug.WriteLine($"UserData.Current is null: {UserData.Current == null}");
+
+        if (UserData.Current != null)
         {
-            UserDto currentUserDto = new UserDto();
-            currentUserDto.Id = UserData.Current.Id;
-            await Test(currentUserDto);
+            System.Diagnostics.Debug.WriteLine($"UserData.Current.Id: {UserData.Current.Id}");
+            System.Diagnostics.Debug.WriteLine($"UserData.Current.Name: {UserData.Current.Name}");
+
+            if (UserData.Current.Id > 0)
+            {
+                await Test(UserData.Current.ToDto());
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("❌ UserData.Current.Id is 0 or negative");
+                await DisplayAlert("Error", "Invalid user ID. Please log in again.", "OK");
+                await Shell.Current.GoToAsync("//Login");
+            }
         }
         else
         {
+            System.Diagnostics.Debug.WriteLine("❌ UserData.Current is null");
             await DisplayAlert("Error", "User data not found. Please log in again.", "OK");
             await Shell.Current.GoToAsync("//Login");
         }
     }
 
-    // Navigate to SignUp page
+    async Task Test(UserDto currentDTO)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"=== Test method called with userId: {currentDTO?.Id} ===");
+
+            if (currentDTO == null || currentDTO.Id <= 0)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ Invalid currentDTO");
+                await DisplayAlert("Error", "Invalid user data", "OK");
+                await Shell.Current.GoToAsync("//Login");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"🔄 Calling SpotiLoveAPIService.GetSwipes...");
+            test = await SpotiLoveAPIService.GetSwipes(currentDTO);
+
+            System.Diagnostics.Debug.WriteLine($"📊 GetSwipes returned: {(test == null ? "null" : $"{test.Count} users")}");
+
+            if (test != null && test.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"✅ Found {test.Count} users, displaying first user");
+                await UpdateUserDisplay(test[0]);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ No users returned from API");
+
+                if (NameLabel != null)
+                    NameLabel.Text = "No users available";
+                if (UserSuggestionImage != null)
+                    UserSuggestionImage.Source = "default_user.png";
+
+                await DisplayAlert("No Users", "No users available at the moment. Please try again later.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Test error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            await DisplayAlert("Error", $"Failed to load users: {ex.Message}", "OK");
+        }
+    }
+
     private async void OnGoToSignUp(object sender, EventArgs e)
     {
         try
@@ -43,35 +97,32 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Initialize and load user data from API
-    async Task Test(UserDto currentDTO)
+    private async void OnDisconnect(object sender, EventArgs e)
     {
         try
         {
-            UserDto currentUserDto = new UserDto();
-            currentUserDto.Id = UserData.Current.Id;
-            test = await SpotiLoveAPIService.GetSwipes(currentUserDto);
-            if (test != null && test.Count > 0)
+            bool confirm = await DisplayAlert(
+                "Disconnect",
+                "Are you sure you want to log out?",
+                "Yes",
+                "Cancel"
+            );
+
+            if (confirm)
             {
-                await UpdateUserDisplay(test[0]);
-            }
-            else
-            {
-                // Handle empty user list
-                if (NameLabel != null)
-                    NameLabel.Text = "No users available";
-                if (UserSuggestionImage != null)
-                    UserSuggestionImage.Source = "default_user.png";
+                UserData.Current = null;
+                _imageCache.Clear();
+                test = null;
+                await Shell.Current.GoToAsync("//Login");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Test error: {ex.Message}");
-            await DisplayAlert("Error", $"Failed to load users: {ex.Message}", "OK");
+            System.Diagnostics.Debug.WriteLine($"Disconnect error: {ex.Message}");
+            await DisplayAlert("Error", "Failed to disconnect. Please try again.", "OK");
         }
     }
 
-    // Handle Like button click
     private async void LIKE_Clicked(object sender, EventArgs e)
     {
         if (test != null && test.Count > 0)
@@ -94,7 +145,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Handle Dislike button click
     private async void Dislike_Clicked(object sender, EventArgs e)
     {
         if (test != null && test.Count > 0)
@@ -117,7 +167,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Load next user in the list
     private async Task LoadNextUser()
     {
         try
@@ -130,21 +179,18 @@ public partial class MainPage : ContentPage
             if (test != null && test.Count > 0)
             {
                 await UpdateUserDisplay(test[0]);
-
             }
             else
             {
-                // Reload users from API when list is empty
                 try
                 {
                     UserDto currentDTO = new UserDto();
                     currentDTO.Id = UserData.Current.Id;
                     test = await SpotiLoveAPIService.GetSwipes(currentDTO);
+
                     if (test != null && test.Count > 0)
                     {
                         await UpdateUserDisplay(test[0]);
-
-                        // Preload images for new batch
                     }
                     else
                     {
@@ -164,7 +210,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Update the UI with current user data (optimized)
     private async Task UpdateUserDisplay(UserDto user)
     {
         try
@@ -175,18 +220,82 @@ public partial class MainPage : ContentPage
                 return;
             }
 
-            // Ensure we're on the main thread for UI updates
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 try
                 {
-                    // Update name label with null check
+                    // Update name and age
                     if (NameLabel != null)
                     {
-                        NameLabel.Text = !string.IsNullOrEmpty(user.Name) ? user.Name : "Unknown User";
+                        string displayName = !string.IsNullOrEmpty(user.Name) ? user.Name : "Unknown User";
+                        if (user.Age > 0)
+                        {
+                            displayName += $", {user.Age}";
+                        }
+                        NameLabel.Text = displayName;
                     }
 
-                    // Update image with caching and null checks
+                    // Update location
+                    if (LocationLabel != null)
+                    {
+                        LocationLabel.Text = !string.IsNullOrEmpty(user.Location) ? user.Location : "Location unknown";
+                    }
+
+                    // Update bio
+                    if (BioLabel != null && BioContainer != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(user.Bio))
+                        {
+                            BioLabel.Text = user.Bio;
+                            BioContainer.IsVisible = true;
+                        }
+                        else
+                        {
+                            BioLabel.Text = "No bio available";
+                            BioContainer.IsVisible = false;
+                        }
+                    }
+
+                    // Update genre tags
+                    if (GenreTagsContainer != null)
+                    {
+                        GenreTagsContainer.Clear();
+
+                        if (user.MusicProfile != null && !string.IsNullOrEmpty(user.MusicProfile.FavoriteGenres))
+                        {
+                            var genres = user.MusicProfile.FavoriteGenres
+                                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(g => g.Trim())
+                                .Take(3)
+                                .ToList();
+
+                            foreach (var genre in genres)
+                            {
+                                var frame = new Frame
+                                {
+                                    BackgroundColor = genres.IndexOf(genre) == 0
+                                        ? Color.FromArgb("#1db954")
+                                        : Color.FromArgb("#535353"),
+                                    Padding = new Thickness(6, 3),
+                                    CornerRadius = 10,
+                                    Margin = new Thickness(2),
+                                    HasShadow = false
+                                };
+
+                                var label = new Label
+                                {
+                                    Text = genre,
+                                    FontSize = 11,
+                                    TextColor = Colors.White
+                                };
+
+                                frame.Content = label;
+                                GenreTagsContainer.Add(frame);
+                            }
+                        }
+                    }
+
+                    // Update profile image
                     if (UserSuggestionImage != null)
                     {
                         if (user.Images != null && user.Images.Count > 0)
@@ -195,17 +304,14 @@ public partial class MainPage : ContentPage
 
                             if (!string.IsNullOrWhiteSpace(imageUrl))
                             {
-                                // Check if image is already cached
                                 if (_imageCache.ContainsKey(imageUrl))
                                 {
                                     UserSuggestionImage.Source = _imageCache[imageUrl];
                                 }
                                 else
                                 {
-                                    // Show loading placeholder first
                                     UserSuggestionImage.Source = "placeholder_loading.png";
 
-                                    // Load image and cache it
                                     try
                                     {
                                         var imageSource = ImageSource.FromUri(new Uri(imageUrl));
@@ -214,7 +320,6 @@ public partial class MainPage : ContentPage
                                     }
                                     catch (UriFormatException)
                                     {
-                                        // If URL is invalid, treat as local file
                                         UserSuggestionImage.Source = imageUrl;
                                     }
                                 }
@@ -226,17 +331,10 @@ public partial class MainPage : ContentPage
                         }
                         else
                         {
-                            // Set a default image if no image is available
                             UserSuggestionImage.Source = "default_user.png";
                         }
                     }
-
-                    // You can add more user info updates here if your UserDto has additional properties
-                    // For example:
-                    // if (!string.IsNullOrEmpty(user.Age)) 
-                    //     NameLabel.Text += $", {user.Age}";
                 }
-
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"UI Update error: {ex.Message}");

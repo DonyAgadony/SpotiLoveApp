@@ -14,5 +14,15 @@ public class UserData
     public string? Name { get; set; }
     public string? Email { get; set; }
     public int Age { get; set; }
+    public static UserDto? CurrentDTO { get; set; }
+    public UserDto ToDto()
+    {
+        return new UserDto
+        {
+            Id = this.Id,
+            Name = this.Name,
+        };
+
+    }
 }
 

@@ -163,14 +163,80 @@
                     </Picker>
                 </Border>
 
-                <!-- Password Field -->
-                <Border
+                <!-- Sexual Orientation Picker -->
+                <VerticalStackLayout Spacing="5">
+                    <Label
+                        Text="Sexual Orientation"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                    <Border
+                        BackgroundColor="#212121"
+                        Stroke="#535353"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="0">
+                        <Picker
+                            x:Name="SexualOrientationPicker"
+                            Title="Select Orientation"
+                            TitleColor="#b3b3b3"
+                            TextColor="White"
+                            BackgroundColor="Transparent"
+                            Margin="10,5">
+                            <Picker.Items>
+                                <x:String>Female</x:String>
+                                <x:String>Male</x:String>
+                                <x:String>Both</x:String>
+                            </Picker.Items>
+                        </Picker>
+                    </Border>
+                    <Label
+                        Text="Who are you attracted to?"
+                        FontSize="12"
+                        TextColor="#888888"
+                        HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+
+                <!-- Bio Field (NEW) -->
+                <VerticalStackLayout Spacing="5">
+                    <Label
+                        Text="About You"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                    <Border
+                        BackgroundColor="#212121"
+                        Stroke="#535353"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="0">
+                        <Editor
+                            x:Name="BioEditor"
+                            Placeholder="Tell us a bit about yourself... (optional)"
+                            PlaceholderColor="#b3b3b3"
+                            TextColor="White"
+                            BackgroundColor="Transparent"
+                            HeightRequest="100"
+                            MaxLength="500"
+                            Margin="15,10"
+                            AutoSize="TextChanges"/>
+                    </Border>
+                    <Label
+                        x:Name="BioCharCountLabel"
+                        Text="0/500 characters"
+                        FontSize="10"
+                        TextColor="#888888"
+                        HorizontalOptions="End"
+                        Margin="0,-5,0,0"/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Password Field -->
+            <Border
                     BackgroundColor="#212121"
                     Stroke="#535353"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
-                    <Entry
+                <Entry
                         x:Name="PasswordEntry"
                         Placeholder="Password (min. 6 characters)"
                         PlaceholderColor="#b3b3b3"
@@ -178,16 +244,16 @@
                         BackgroundColor="Transparent"
                         IsPassword="True"
                         Margin="15,5"/>
-                </Border>
+            </Border>
 
-                <!-- Confirm Password Field -->
-                <Border
+            <!-- Confirm Password Field -->
+            <Border
                     BackgroundColor="#212121"
                     Stroke="#535353"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 8"
                     Padding="0">
-                    <Entry
+                <Entry
                         x:Name="ConfirmPasswordEntry"
                         Placeholder="Confirm password"
                         PlaceholderColor="#b3b3b3"
@@ -195,7 +261,22 @@
                         BackgroundColor="Transparent"
                         IsPassword="True"
                         Margin="15,5"/>
-                </Border>
+            </Border>
+
+            <!-- Profile Image Picker -->
+            <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+                <Frame WidthRequest="120" HeightRequest="120" CornerRadius="60"
+                       BackgroundColor="#1db954" HasShadow="False">
+                    <Image x:Name="ProfileImagePreview"
+                           Aspect="AspectFill"
+                           WidthRequest="120"
+                           HeightRequest="120"/>
+                </Frame>
+                <Button Text="Choose Profile Picture"
+                        BackgroundColor="#1db954"
+                        TextColor="Black"
+                        Clicked="OnPickImageClicked"
+                        CornerRadius="20"/>
             </VerticalStackLayout>
 
             <!-- Terms and Conditions -->
@@ -305,7 +386,6 @@
                     <TapGestureRecognizer Tapped="OnGoToLogin" />
                 </Label.GestureRecognizers>
             </Label>
-
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

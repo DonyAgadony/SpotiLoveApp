@@ -1,52 +1,82 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Maui.Controls;
 
 namespace SpotiLove;
 
 public partial class SignUp : ContentPage
 {
     private readonly HttpClient _httpClient;
-    private const string API_BASE_URL = "https://spotilove-2.onrender.com"; // Update with your API URL
+    private const string API_BASE_URL = "https://spotilove-2.onrender.com";
+    private string? _selectedImageBase64;
 
     public SignUp()
     {
         InitializeComponent();
         _httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
+
+        // Add character count handler for bio
+        BioEditor.TextChanged += OnBioTextChanged;
     }
 
-    // Navigate to Login page
+    private void OnBioTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (BioCharCountLabel != null)
+        {
+            int currentLength = e.NewTextValue?.Length ?? 0;
+            BioCharCountLabel.Text = $"{currentLength}/500 characters";
+
+            // Change color when approaching limit
+            if (currentLength > 450)
+            {
+                BioCharCountLabel.TextColor = Color.FromArgb("#ff4444");
+            }
+            else if (currentLength > 400)
+            {
+                BioCharCountLabel.TextColor = Color.FromArgb("#ffaa00");
+            }
+            else
+            {
+                BioCharCountLabel.TextColor = Color.FromArgb("#888888");
+            }
+        }
+    }
+
     private async void OnGoToLogin(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("//Login");
     }
 
-    // Handle Create Account button
+    private async void OnBackClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//Login");
+    }
+
     private async void OnCreateAccount(object sender, EventArgs e)
     {
-        // Get form values
         var name = NameEntry.Text?.Trim();
         var email = EmailEntry.Text?.Trim();
         var ageText = AgeEntry.Text?.Trim();
         var gender = GenderPicker.SelectedItem?.ToString();
+        var sexualOrientation = SexualOrientationPicker.SelectedItem?.ToString();
+        var bio = BioEditor.Text?.Trim(); // Get bio text
         var password = PasswordEntry.Text;
         var confirmPassword = ConfirmPasswordEntry.Text;
         var termsAccepted = TermsCheckBox.IsChecked;
 
-        // Comprehensive validation
-        var validationError = ValidateForm(name, email, ageText, gender, password, confirmPassword, termsAccepted);
+        var validationError = ValidateForm(name, email, ageText, gender, sexualOrientation, password, confirmPassword, termsAccepted);
         if (validationError != null)
         {
             await DisplayAlert("Validation Error", validationError, "OK");
             return;
         }
 
-        // Parse age (we know it's valid from validation)
         int age = int.Parse(ageText!);
 
         try
         {
-            // Show loading indicator
+            // Show Loading Indicator
             var loadingPage = new ContentPage
             {
                 Content = new VerticalStackLayout
@@ -76,14 +106,17 @@ public partial class SignUp : ContentPage
 
             await Navigation.PushModalAsync(loadingPage, false);
 
-            // Call registration API
+            // Prepare API Call (include bio)
             var registerData = new
             {
                 Name = name,
                 Email = email,
                 Password = password,
                 Age = age,
-                Gender = gender
+                Gender = gender,
+                SexualOrientation = sexualOrientation,
+                Bio = bio, // Include bio in registration
+                ProfileImage = _selectedImageBase64
             };
 
             var json = JsonSerializer.Serialize(registerData);
@@ -91,11 +124,15 @@ public partial class SignUp : ContentPage
 
             var response = await _httpClient.PostAsync("/auth/register", content);
 
-            await Navigation.PopModalAsync(false);
+            if (Navigation.ModalStack.Count > 0)
+            {
+                await Navigation.PopModalAsync(false);
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
             {
-                var responseContent = await response.Content.ReadAsStringAsync();
                 var registerResponse = JsonSerializer.Deserialize<RegisterResponse>(responseContent, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -103,25 +140,21 @@ public partial class SignUp : ContentPage
 
                 if (registerResponse?.Success == true && registerResponse.User != null)
                 {
-                    // Store user data
                     await SecureStorage.SetAsync("user_id", registerResponse.User.Id.ToString());
                     await SecureStorage.SetAsync("user_email", registerResponse.User.Email ?? "");
                     await SecureStorage.SetAsync("user_name", registerResponse.User.Name ?? "");
-
                     if (!string.IsNullOrEmpty(registerResponse.Token))
                     {
                         await SecureStorage.SetAsync("auth_token", registerResponse.Token);
                     }
 
-                    // Show success message
+                    UserData.Current = registerResponse.User;
+
                     await DisplayAlert("Success",
                         $"Welcome to SpotiLove, {registerResponse.User.Name}! Your account has been created.",
                         "Get Started");
 
-                    UserData.Current = registerResponse.User;
-
-                    // Navigate to main page
-                    await Shell.Current.GoToAsync("//MainPage");
+                    await Shell.Current.GoToAsync("//ArtistSelectionPage");
                 }
                 else
                 {
@@ -132,111 +165,113 @@ public partial class SignUp : ContentPage
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-
-                // Try to parse error message
                 try
                 {
-                    var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(errorContent, new JsonSerializerOptions
+                    var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(responseContent, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
 
                     await DisplayAlert("Registration Failed",
-                        errorResponse?.Message ?? "Unable to create account. Please try again.",
+                        errorResponse?.Message ?? "Server error occurred. Please try again.",
                         "OK");
                 }
                 catch
                 {
                     await DisplayAlert("Registration Failed",
-                        "Unable to create account. Please try again.",
+                        "An unknown error occurred during registration. Please try again.",
                         "OK");
                 }
             }
         }
         catch (HttpRequestException)
         {
-            await Navigation.PopModalAsync(false);
+            if (Navigation.ModalStack.Count > 0)
+            {
+                await Navigation.PopModalAsync(false);
+            }
             await DisplayAlert("Connection Error",
                 "Unable to connect to the server. Please check your internet connection and try again.",
                 "OK");
         }
         catch (Exception ex)
         {
-            await Navigation.PopModalAsync(false);
+            if (Navigation.ModalStack.Count > 0)
+            {
+                await Navigation.PopModalAsync(false);
+            }
             await DisplayAlert("Error",
                 $"An unexpected error occurred: {ex.Message}",
                 "OK");
         }
     }
 
-    // Comprehensive form validation
-    private string? ValidateForm(string? name, string? email, string? ageText, string? gender,
-                                  string? password, string? confirmPassword, bool termsAccepted)
+    private async void OnPickImageClicked(object sender, EventArgs e)
     {
-        // Name validation
-        if (string.IsNullOrWhiteSpace(name))
-            return "Please enter your full name";
+        try
+        {
+            var result = await FilePicker.PickAsync(new PickOptions
+            {
+                FileTypes = FilePickerFileType.Images,
+                PickerTitle = "Choose a profile picture"
+            });
 
-        if (name.Length < 2)
-            return "Name must be at least 2 characters long";
+            if (result == null)
+                return;
 
-        if (name.Length > 50)
-            return "Name must be less than 50 characters";
+            using var stream = await result.OpenReadAsync();
+            ProfileImagePreview.Source = ImageSource.FromStream(() => stream);
 
-        // Email validation
-        if (string.IsNullOrWhiteSpace(email))
-            return "Please enter your email address";
+            using var ms = new MemoryStream();
+            stream.Seek(0, SeekOrigin.Begin);
+            await stream.CopyToAsync(ms);
+            _selectedImageBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to pick image: {ex.Message}", "OK");
+        }
+    }
 
-        if (!IsValidEmail(email))
+    private string? ValidateForm(string? name, string? email, string? ageText, string? gender,
+                                 string? sexualOrientation, string? password, string? confirmPassword, bool termsAccepted)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Length < 2 || name.Length > 50)
+            return "Name must be between 2 and 50 characters long";
+
+        if (string.IsNullOrWhiteSpace(email) || !IsValidEmail(email))
             return "Please enter a valid email address";
 
-        // Age validation
-        if (string.IsNullOrWhiteSpace(ageText))
-            return "Please enter your age";
+        if (string.IsNullOrWhiteSpace(ageText) || !int.TryParse(ageText, out int age) || age < 18 || age > 120)
+            return "You must be a valid age between 18 and 120";
 
-        if (!int.TryParse(ageText, out int age))
-            return "Please enter a valid age";
-
-        if (age < 18)
-            return "You must be at least 18 years old to use SpotiLove";
-
-        if (age > 120)
-            return "Please enter a valid age";
-
-        // Gender validation
         if (string.IsNullOrWhiteSpace(gender))
             return "Please select your gender";
 
-        // Password validation
-        if (string.IsNullOrWhiteSpace(password))
-            return "Please enter a password";
+        if (!string.IsNullOrWhiteSpace(sexualOrientation) && !IsValidOrientation(sexualOrientation))
+            return "Please select a valid sexual orientation";
 
-        if (password.Length < 6)
-            return "Password must be at least 6 characters long";
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 6 || password.Length > 100)
+            return "Password must be between 6 and 100 characters long";
 
-        if (password.Length > 100)
-            return "Password must be less than 100 characters";
-
-        // Check password strength
         if (!HasMinimumPasswordStrength(password))
             return "Password should contain at least one letter and one number";
 
-        // Confirm password validation
-        if (string.IsNullOrWhiteSpace(confirmPassword))
-            return "Please confirm your password";
-
-        if (password != confirmPassword)
+        if (string.IsNullOrWhiteSpace(confirmPassword) || password != confirmPassword)
             return "Passwords do not match";
 
-        // Terms acceptance validation
         if (!termsAccepted)
             return "You must agree to the Terms of Service and Privacy Policy to continue";
 
-        return null; // All validation passed
+        return null;
     }
 
-    // Email validation using regex
+    private bool IsValidOrientation(string orientation)
+    {
+        var validOptions = new[] { "Female", "Male", "Both" };
+        return validOptions.Contains(orientation);
+    }
+
     private bool IsValidEmail(string email)
     {
         try
@@ -250,32 +285,11 @@ public partial class SignUp : ContentPage
         }
     }
 
-    // Check minimum password strength
     private bool HasMinimumPasswordStrength(string password)
     {
-        // At least one letter and one number
         bool hasLetter = password.Any(char.IsLetter);
         bool hasDigit = password.Any(char.IsDigit);
         return hasLetter && hasDigit;
-    }
-
-    // Handle back button
-    private async void OnBackClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//Login");
-    }
-
-    // Social signup handlers
-    private async void OnGoogleSignUp(object sender, EventArgs e)
-    {
-        await DisplayAlert("Google Sign Up", "Google authentication coming soon!", "OK");
-        // TODO: Implement Google OAuth
-    }
-
-    private async void OnAppleSignUp(object sender, EventArgs e)
-    {
-        await DisplayAlert("Apple Sign Up", "Apple authentication coming soon!", "OK");
-        // TODO: Implement Apple Sign In
     }
 
     private async void OnSpotifySignUp(object sender, EventArgs e)
@@ -295,7 +309,16 @@ public partial class SignUp : ContentPage
         }
     }
 
-    // Terms and Privacy handlers
+    private async void OnGoogleSignUp(object sender, EventArgs e)
+    {
+        await DisplayAlert("Google Sign Up", "Google authentication coming soon!", "OK");
+    }
+
+    private async void OnAppleSignUp(object sender, EventArgs e)
+    {
+        await DisplayAlert("Apple Sign Up", "Apple authentication coming soon!", "OK");
+    }
+
     private async void OnTermsClicked(object sender, EventArgs e)
     {
         await DisplayAlert("Terms of Service",
@@ -321,15 +344,15 @@ public partial class SignUp : ContentPage
             "OK");
     }
 
-    // Response models
-    private class RegisterResponse
+    public class RegisterResponse
     {
         public bool Success { get; set; }
         public string? Message { get; set; }
         public string? Token { get; set; }
         public UserData? User { get; set; }
     }
-    private class ErrorResponse
+
+    public class ErrorResponse
     {
         public bool Success { get; set; }
         public string? Message { get; set; }
