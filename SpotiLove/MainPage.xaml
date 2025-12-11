@@ -196,24 +196,5 @@
                 </Frame>
             </Grid>
         </ScrollView>
-
-        <Border
-            Grid.Row="2"
-            StrokeShape="RoundRectangle 5"
-            Stroke="#1db954"
-            StrokeThickness="1"
-            BackgroundColor="Transparent"
-            Padding="12"
-            Margin="20,0,20,20">
-            <Label
-                Text="Need to create an account? Go to SignUp →"
-                TextColor="#1db954"
-                FontSize="14"
-                HorizontalOptions="Center">
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnGoToSignUp" />
-                </Label.GestureRecognizers>
-            </Label>
-        </Border>
     </Grid>
 </ContentPage>

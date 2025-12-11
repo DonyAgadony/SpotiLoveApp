@@ -10,7 +10,7 @@ public class UserData
 {
     public static UserData? Current { get; set; }
 
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? Name { get; set; }
     public string? Email { get; set; }
     public int Age { get; set; }

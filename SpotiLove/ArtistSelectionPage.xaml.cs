@@ -8,7 +8,7 @@ public partial class ArtistSelectionPage : ContentPage
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiBaseUrl = "https://spotilove-2.onrender.com";
-    private readonly int _userId;
+    private readonly Guid _userId;
     private ObservableCollection<ArtistViewModel> _artists = new();
     private List<ArtistViewModel> _selectedArtists = new();
 

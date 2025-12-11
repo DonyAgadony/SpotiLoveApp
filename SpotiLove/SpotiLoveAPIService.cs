@@ -28,12 +28,6 @@ namespace SpotiLove
                     return null;
                 }
 
-                if (current.Id <= 0)
-                {
-                    Debug.WriteLine($"❌ Invalid user ID: {current.Id}");
-                    return null;
-                }
-
                 // ✅ FIX 2: Check if user has MusicProfile
                 if (current.MusicProfile == null)
                 {
@@ -263,7 +257,7 @@ public class UserImageDto
 
 public class UserDto
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? Name { get; set; }
     public string? Email { get; set; }
     public int Age { get; set; }
@@ -308,4 +302,4 @@ public class UserSuggestionQueue
 
 public record CreateUserDto(string Name, int Age, string Gender, string Genres, string Artists, string Songs = "");
 public record UpdateProfileDto(string Genres, string Artists, string Songs = "");
-public record LikeDto(int FromUserId, int ToUserId, bool IsLike);
+public record LikeDto(Guid FromUserId, Guid ToUserId, bool IsLike);

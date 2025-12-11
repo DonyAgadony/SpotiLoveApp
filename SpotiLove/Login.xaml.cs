@@ -18,7 +18,7 @@ public partial class Login : ContentPage
 
     private async void OnGoToSignUp(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("//SignUp");
+        await Navigation.PushAsync(new SignUp());
     }
 
     private async void OnSignIn(object sender, EventArgs e)
@@ -134,7 +134,7 @@ public partial class Login : ContentPage
     {
         try
         {
-            var spotifyLoginUrl = $"{API_BASE_URL}/auth/spotify/login";
+            var spotifyLoginUrl = $"{API_BASE_URL}/login";
 
             var loadingPage = new ContentPage
             {

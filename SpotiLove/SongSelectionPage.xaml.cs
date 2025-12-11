@@ -11,14 +11,14 @@ public partial class SongSelectionPage : ContentPage
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiBaseUrl = "https://spotilove-2.onrender.com";
-    private readonly int _userId;
+    private readonly Guid _userId;
     private readonly List<string> _selectedArtists;
     private ObservableCollection<SongViewModel> _songs = new();
     private List<SongViewModel> _selectedSongs = new();
     private MediaElement? _currentPlayer;
     private SongViewModel? _currentlyPlayingSong;
 
-    public SongSelectionPage(int userId, List<string> selectedArtists)
+    public SongSelectionPage(Guid userId, List<string> selectedArtists)
     {
         InitializeComponent();
         _userId = userId;

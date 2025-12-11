@@ -3,7 +3,7 @@ namespace SpotiLove;
 
 public partial class MainPage : ContentPage
 {
-    List<UserDto> test = null;
+    List<UserDto>? test = null;
     private readonly Dictionary<string, ImageSource> _imageCache = new Dictionary<string, ImageSource>();
 
     public MainPage()
@@ -22,22 +22,28 @@ public partial class MainPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"UserData.Current.Id: {UserData.Current.Id}");
             System.Diagnostics.Debug.WriteLine($"UserData.Current.Name: {UserData.Current.Name}");
 
-            if (UserData.Current.Id > 0)
-            {
-                await Test(UserData.Current.ToDto());
-            }
-            else
+            if (UserData.Current.Id == null)
             {
                 System.Diagnostics.Debug.WriteLine("❌ UserData.Current.Id is 0 or negative");
                 await DisplayAlert("Error", "Invalid user ID. Please log in again.", "OK");
-                await Shell.Current.GoToAsync("//Login");
+                if (Shell.Current != null)
+                    await Shell.Current.GoToAsync("//Login");
+                else
+                    await Application.Current.MainPage.Navigation.PushAsync(new Login());
+            }
+            else
+            {
+                await Test(UserData.Current.ToDto());
             }
         }
         else
         {
             System.Diagnostics.Debug.WriteLine("❌ UserData.Current is null");
             await DisplayAlert("Error", "User data not found. Please log in again.", "OK");
-            await Shell.Current.GoToAsync("//Login");
+            if (Shell.Current != null)
+                await Shell.Current.GoToAsync("//Login");
+            else
+                await Application.Current.MainPage.Navigation.PushAsync(new Login());
         }
     }
 
@@ -47,11 +53,14 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"=== Test method called with userId: {currentDTO?.Id} ===");
 
-            if (currentDTO == null || currentDTO.Id <= 0)
+            if (currentDTO == null || currentDTO.Id == null)
             {
                 System.Diagnostics.Debug.WriteLine("❌ Invalid currentDTO");
                 await DisplayAlert("Error", "Invalid user data", "OK");
-                await Shell.Current.GoToAsync("//Login");
+                if (Shell.Current != null)
+                    await Shell.Current.GoToAsync("//Login");
+                else
+                    await Application.Current.MainPage.Navigation.PushAsync(new Login());
                 return;
             }
 
@@ -60,8 +69,7 @@ public partial class MainPage : ContentPage
 
             System.Diagnostics.Debug.WriteLine($"📊 GetSwipes returned: {(test == null ? "null" : $"{test.Count} users")}");
 
-            if (test != null && test.Count > 0)
-            {
+            if (test != null && test.Count > 0){
                 System.Diagnostics.Debug.WriteLine($"✅ Found {test.Count} users, displaying first user");
                 await UpdateUserDisplay(test[0]);
             }
@@ -113,7 +121,7 @@ public partial class MainPage : ContentPage
                 UserData.Current = null;
                 _imageCache.Clear();
                 test = null;
-                await Shell.Current.GoToAsync("//Login");
+                await Navigation.PushAsync(new Login());
             }
         }
         catch (Exception ex)

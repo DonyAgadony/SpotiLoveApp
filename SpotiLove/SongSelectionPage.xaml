@@ -38,7 +38,6 @@
             <FlexLayout Direction="Row" JustifyContent="SpaceBetween" AlignItems="Center">
                 <Label Text="🎤 Artists ✓" FontSize="14" TextColor="#1db954"/>
                 <Label Text="🎵 Songs" FontSize="14" TextColor="White" FontAttributes="Bold"/>
-                <Label Text="🎸 Genres" FontSize="14" TextColor="#535353"/>
             </FlexLayout>
         </Frame>
 

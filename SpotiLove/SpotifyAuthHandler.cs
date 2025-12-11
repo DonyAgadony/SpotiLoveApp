@@ -1,4 +1,5 @@
 ﻿using System.Web;
+using System.Diagnostics;
 
 namespace SpotiLove;
 
@@ -8,41 +9,61 @@ public class SpotifyAuthHandler
     {
         try
         {
+            Debug.WriteLine($"🔐 Processing Spotify callback: {uri}");
+
             var parsedUri = new Uri(uri);
             var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
 
             var token = queryParams["token"];
             var userIdStr = queryParams["userId"];
             var isNewUserStr = queryParams["isNewUser"];
+            var name = queryParams["name"];
+
+            Debug.WriteLine($"📋 Parsed params - Token: {token?.Substring(0, 8)}..., UserId: {userIdStr}, IsNew: {isNewUserStr}, Name: {name}");
 
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdStr))
             {
+                Debug.WriteLine("❌ Missing token or userId in callback");
                 await Shell.Current.DisplayAlert("Error", "Invalid authentication response", "OK");
                 return;
             }
 
-            int userId = int.Parse(userIdStr);
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                Debug.WriteLine($"❌ Invalid userId format: {userIdStr}");
+                await Shell.Current.DisplayAlert("Error", "Invalid user ID in response", "OK");
+                return;
+            }
+
             bool isNewUser = bool.Parse(isNewUserStr ?? "false");
 
             // Store authentication data
             await SecureStorage.SetAsync("auth_token", token);
             await SecureStorage.SetAsync("user_id", userId.ToString());
+            Debug.WriteLine("✅ Saved auth token and user ID to secure storage");
 
             // Fetch full user profile from API
             using var httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
 
+            Debug.WriteLine($"🌐 Fetching user profile for ID: {userId}");
             var response = await httpClient.GetAsync($"/users/{userId}");
+            Debug.WriteLine($"📡 API Response: {response.StatusCode}");
 
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"📄 Response length: {content.Length} characters");
+
                 var userResponse = System.Text.Json.JsonSerializer.Deserialize<UserResponse>(
                     content,
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (userResponse?.User != null)
                 {
+                    Debug.WriteLine($"✅ User data deserialized: {userResponse.User.Name}");
+
                     // Set global user data
                     UserData.Current = new UserData
                     {
@@ -55,20 +76,37 @@ public class SpotifyAuthHandler
                     await SecureStorage.SetAsync("user_name", userResponse.User.Name ?? "");
                     await SecureStorage.SetAsync("user_email", userResponse.User.Email ?? "");
 
+                    Debug.WriteLine($"✅ UserData.Current set: ID={UserData.Current.Id}, Name={UserData.Current.Name}");
+
                     // Show success message
                     string message = isNewUser
                         ? $"Welcome to SpotiLove, {userResponse.User.Name}! Your music profile has been imported from Spotify."
                         : $"Welcome back, {userResponse.User.Name}! Your music profile has been updated.";
 
                     await Shell.Current.DisplayAlert("Success", message, "OK");
+
+                    // Navigate to main page
+                    Debug.WriteLine("🚀 Navigating to MainPage...");
+                    await Shell.Current.GoToAsync("//MainPage");
+                }
+                else
+                {
+                    Debug.WriteLine("❌ User data was null after deserialization");
+                    await Shell.Current.DisplayAlert("Error", "Failed to load user profile", "OK");
                 }
             }
-
-            // Navigate to main page
-            await Shell.Current.GoToAsync("//MainPage");
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"❌ API error: {response.StatusCode}");
+                Debug.WriteLine($"❌ Error content: {errorContent}");
+                await Shell.Current.DisplayAlert("Error", "Failed to fetch user profile from server", "OK");
+            }
         }
         catch (Exception ex)
         {
+            Debug.WriteLine($"❌ Exception in HandleSpotifyCallback: {ex.Message}");
+            Debug.WriteLine($"❌ Stack trace: {ex.StackTrace}");
             await Shell.Current.DisplayAlert("Error", $"Failed to complete Spotify authentication: {ex.Message}", "OK");
         }
     }
