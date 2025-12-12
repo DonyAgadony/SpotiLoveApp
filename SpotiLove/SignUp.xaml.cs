@@ -298,10 +298,6 @@ public partial class SignUp : ContentPage
         {
             var spotifyLoginUrl = $"{API_BASE_URL}/login";
             await Browser.OpenAsync(spotifyLoginUrl, BrowserLaunchMode.SystemPreferred);
-
-            await DisplayAlert("Spotify Sign Up",
-                "After authorizing with Spotify, your account will be created automatically.",
-                "OK");
         }
         catch (Exception ex)
         {

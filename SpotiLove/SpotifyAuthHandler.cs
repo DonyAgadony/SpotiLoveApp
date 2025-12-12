@@ -1,5 +1,6 @@
 ﻿using System.Web;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace SpotiLove;
 
@@ -9,7 +10,9 @@ public class SpotifyAuthHandler
     {
         try
         {
+            Debug.WriteLine("======================================");
             Debug.WriteLine($"🔐 Processing Spotify callback: {uri}");
+            Debug.WriteLine("======================================");
 
             var parsedUri = new Uri(uri);
             var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
@@ -19,7 +22,11 @@ public class SpotifyAuthHandler
             var isNewUserStr = queryParams["isNewUser"];
             var name = queryParams["name"];
 
-            Debug.WriteLine($"📋 Parsed params - Token: {token?.Substring(0, 8)}..., UserId: {userIdStr}, IsNew: {isNewUserStr}, Name: {name}");
+            Debug.WriteLine($"📋 Parsed parameters:");
+            Debug.WriteLine($"   Token: {(token != null ? $"{token.Substring(0, Math.Min(8, token.Length))}..." : "null")}");
+            Debug.WriteLine($"   UserId: {userIdStr}");
+            Debug.WriteLine($"   IsNew: {isNewUserStr}");
+            Debug.WriteLine($"   Name: {name}");
 
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdStr))
             {
@@ -37,17 +44,19 @@ public class SpotifyAuthHandler
 
             bool isNewUser = bool.Parse(isNewUserStr ?? "false");
 
+            Debug.WriteLine($"✅ Valid parameters parsed - UserId: {userId}");
+
             // Store authentication data
             await SecureStorage.SetAsync("auth_token", token);
             await SecureStorage.SetAsync("user_id", userId.ToString());
             Debug.WriteLine("✅ Saved auth token and user ID to secure storage");
 
             // Fetch full user profile from API
+            Debug.WriteLine("🌐 Fetching user profile from API...");
             using var httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
 
-            Debug.WriteLine($"🌐 Fetching user profile for ID: {userId}");
             var response = await httpClient.GetAsync($"/users/{userId}");
             Debug.WriteLine($"📡 API Response: {response.StatusCode}");
 
@@ -56,9 +65,9 @@ public class SpotifyAuthHandler
                 var content = await response.Content.ReadAsStringAsync();
                 Debug.WriteLine($"📄 Response length: {content.Length} characters");
 
-                var userResponse = System.Text.Json.JsonSerializer.Deserialize<ApiUserResponse>(
+                var userResponse = JsonSerializer.Deserialize<ApiUserResponse>(
                     content,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (userResponse?.User != null)
                 {
@@ -76,32 +85,60 @@ public class SpotifyAuthHandler
                     await SecureStorage.SetAsync("user_name", userResponse.User.Name ?? "");
                     await SecureStorage.SetAsync("user_email", userResponse.User.Email ?? "");
 
-                    Debug.WriteLine($"✅ UserData.Current set: ID={UserData.Current.Id}, Name={UserData.Current.Name}");
+                    Debug.WriteLine($"✅ UserData.Current set:");
+                    Debug.WriteLine($"   ID: {UserData.Current.Id}");
+                    Debug.WriteLine($"   Name: {UserData.Current.Name}");
+                    Debug.WriteLine($"   Email: {UserData.Current.Email}");
+                    Debug.WriteLine($"   Age: {UserData.Current.Age}");
 
-                    // Check if profile is complete (Age > 0 means they filled it out)
-                    if (isNewUser || userResponse.User.Age == 0 || string.IsNullOrEmpty(userResponse.User.Gender))
+                    // Check if profile is complete
+                    bool isProfileIncomplete = userResponse.User.Age == 0 ||
+                                              string.IsNullOrEmpty(userResponse.User.Gender) ||
+                                              string.IsNullOrEmpty(userResponse.User.SexualOrientation);
+
+                    bool isMusicProfileEmpty = userResponse.User.MusicProfile == null ||
+                                              (userResponse.User.MusicProfile.FavoriteArtists?.Count == 0 &&
+                                               userResponse.User.MusicProfile.FavoriteGenres?.Count == 0 &&
+                                               userResponse.User.MusicProfile.FavoriteSongs?.Count == 0);
+
+                    Debug.WriteLine($"📊 Profile status:");
+                    Debug.WriteLine($"   Basic profile incomplete: {isProfileIncomplete}");
+                    Debug.WriteLine($"   Music profile empty: {isMusicProfileEmpty}");
+
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
-                        // Profile incomplete - navigate to profile completion
-                        await Shell.Current.DisplayAlert(
-                            "Welcome to SpotiLove!",
-                            $"Hi {userResponse.User.Name}! Let's set up your profile.",
-                            "Let's Go"
-                        );
+                        if (isProfileIncomplete)
+                        {
+                            Debug.WriteLine("🚀 Navigating to CompleteProfilePage...");
+                            await Shell.Current.DisplayAlert(
+                                "Welcome to SpotiLove!",
+                                $"Hi {userResponse.User.Name}! Let's set up your profile.",
+                                "Let's Go"
+                            );
+                            await Shell.Current.Navigation.PushAsync(
+                                new CompleteProfilePage(userResponse.User.Id, userResponse.User.Name ?? "")
+                            );
+                        }
+                        else if (isMusicProfileEmpty)
+                        {
+                            Debug.WriteLine("🚀 Navigating to ArtistSelectionPage...");
+                            await Shell.Current.DisplayAlert(
+                                "Set Up Your Music Profile",
+                                "Let's find your music taste!",
+                                "Continue"
+                            );
+                            await Shell.Current.Navigation.PushAsync(new ArtistSelectionPage());
+                        }
+                        else
+                        {
+                            Debug.WriteLine("🚀 Navigating to MainPage...");
+                            string message = $"Welcome back, {userResponse.User.Name}!";
+                            await Shell.Current.DisplayAlert("Success", message, "OK");
+                            await Shell.Current.GoToAsync("//MainPage");
+                        }
+                    });
 
-                        Debug.WriteLine("🚀 Navigating to CompleteProfilePage...");
-                        await Shell.Current.Navigation.PushAsync(
-                            new CompleteProfilePage(userResponse.User.Id, userResponse.User.Name ?? "")
-                        );
-                    }
-                    else
-                    {
-                        // Profile complete - navigate to main page
-                        string message = $"Welcome back, {userResponse.User.Name}! Your music profile has been updated.";
-                        await Shell.Current.DisplayAlert("Success", message, "OK");
-
-                        Debug.WriteLine("🚀 Navigating to MainPage...");
-                        await Shell.Current.GoToAsync("//MainPage");
-                    }
+                    Debug.WriteLine("✅ Navigation complete");
                 }
                 else
                 {

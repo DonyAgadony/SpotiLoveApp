@@ -14,6 +14,8 @@ namespace SpotiLove
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("🚀 App OnStart called");
+
                 var userId = await SecureStorage.GetAsync("user_id");
                 if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out Guid id))
                 {
@@ -29,12 +31,12 @@ namespace SpotiLove
 
                     System.Diagnostics.Debug.WriteLine($"✅ Restored user session: Id={id}, Name={name}");
 
-                    // Validate user profile completeness on boot
+                    // Validate profile with better error handling
                     await ValidateUserProfile(id, name);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("⚠️ No saved user session found");
+                    System.Diagnostics.Debug.WriteLine("⚠️ No saved user session found - staying on login page");
                 }
             }
             catch (Exception ex)
@@ -47,11 +49,11 @@ namespace SpotiLove
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"🔍 Validating profile for user {userId}...");
+                System.Diagnostics.Debug.WriteLine($"🔍 Validating profile completeness for user {userId}");
 
                 using var httpClient = new HttpClient();
                 httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
 
                 var response = await httpClient.GetAsync($"/users/{userId}");
 
@@ -75,11 +77,8 @@ namespace SpotiLove
                 }
 
                 var user = userResponse.User;
-
-                // Update UserData with latest info
                 UserData.Current.Age = user.Age;
 
-                // Check if profile is incomplete
                 bool isProfileIncomplete = user.Age == 0 ||
                                           string.IsNullOrEmpty(user.Gender) ||
                                           string.IsNullOrEmpty(user.SexualOrientation);
@@ -117,10 +116,27 @@ namespace SpotiLove
                     System.Diagnostics.Debug.WriteLine("✅ Profile complete - user can proceed to MainPage");
                 }
             }
+            catch (TaskCanceledException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"⏱️ Request timed out: {ex.Message}");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    var retry = await MainPage.DisplayAlert(
+                        "Connection Timeout",
+                        "The server is taking too long to respond. Retry?",
+                        "Retry",
+                        "Continue Anyway"
+                    );
+
+                    if (retry)
+                    {
+                        await ValidateUserProfile(userId, userName);
+                    }
+                });
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Profile validation error: {ex.Message}");
-                // Don't block the user, just log the error
             }
         }
 
@@ -128,7 +144,6 @@ namespace SpotiLove
         {
             System.Diagnostics.Debug.WriteLine("🔄 Clearing invalid session and returning to login");
 
-            // Clear stored credentials
             SecureStorage.Remove("user_id");
             SecureStorage.Remove("user_name");
             SecureStorage.Remove("user_email");
@@ -147,15 +162,24 @@ namespace SpotiLove
             });
         }
 
+        // ✅ CRITICAL: Handle Deep Links
         protected override async void OnAppLinkRequestReceived(Uri uri)
         {
             base.OnAppLinkRequestReceived(uri);
 
             System.Diagnostics.Debug.WriteLine($"🔗 Deep link received: {uri}");
+            System.Diagnostics.Debug.WriteLine($"   Scheme: {uri.Scheme}");
+            System.Diagnostics.Debug.WriteLine($"   Host: {uri.Host}");
+            System.Diagnostics.Debug.WriteLine($"   Path: {uri.AbsolutePath}");
+            System.Diagnostics.Debug.WriteLine($"   Query: {uri.Query}");
 
             if (uri.Scheme == "spotilove" && uri.Host == "auth")
             {
-                System.Diagnostics.Debug.WriteLine("✅ Valid Spotify callback detected");
+                System.Diagnostics.Debug.WriteLine("✅ Valid Spotify callback detected - processing...");
+
+                // Give UI time to be ready
+                await Task.Delay(500);
+
                 await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
             }
             else
