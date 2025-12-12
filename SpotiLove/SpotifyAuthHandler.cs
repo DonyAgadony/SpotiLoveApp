@@ -78,16 +78,30 @@ public class SpotifyAuthHandler
 
                     Debug.WriteLine($"✅ UserData.Current set: ID={UserData.Current.Id}, Name={UserData.Current.Name}");
 
-                    // Show success message
-                    string message = isNewUser
-                        ? $"Welcome to SpotiLove, {userResponse.User.Name}! Your music profile has been imported from Spotify."
-                        : $"Welcome back, {userResponse.User.Name}! Your music profile has been updated.";
+                    // Check if profile is complete (Age > 0 means they filled it out)
+                    if (isNewUser || userResponse.User.Age == 0 || string.IsNullOrEmpty(userResponse.User.Gender))
+                    {
+                        // Profile incomplete - navigate to profile completion
+                        await Shell.Current.DisplayAlert(
+                            "Welcome to SpotiLove!",
+                            $"Hi {userResponse.User.Name}! Let's set up your profile.",
+                            "Let's Go"
+                        );
 
-                    await Shell.Current.DisplayAlert("Success", message, "OK");
+                        Debug.WriteLine("🚀 Navigating to CompleteProfilePage...");
+                        await Shell.Current.Navigation.PushAsync(
+                            new CompleteProfilePage(userResponse.User.Id, userResponse.User.Name ?? "")
+                        );
+                    }
+                    else
+                    {
+                        // Profile complete - navigate to main page
+                        string message = $"Welcome back, {userResponse.User.Name}! Your music profile has been updated.";
+                        await Shell.Current.DisplayAlert("Success", message, "OK");
 
-                    // Navigate to main page
-                    Debug.WriteLine("🚀 Navigating to MainPage...");
-                    await Shell.Current.GoToAsync("//MainPage");
+                        Debug.WriteLine("🚀 Navigating to MainPage...");
+                        await Shell.Current.GoToAsync("//MainPage");
+                    }
                 }
                 else
                 {

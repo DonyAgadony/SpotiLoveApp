@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpotiLove.CompleteProfilePage"
+             BackgroundColor="#121212">
+    <ScrollView>
+        <VerticalStackLayout
+            Margin="0,50,0,0"
+            Padding="30,20"
+            Spacing="30">
+
+            <!-- Header -->
+            <VerticalStackLayout Spacing="10" Margin="0,0,0,30">
+                <Label
+                    Text="Complete Your Profile"
+                    FontSize="28"
+                    FontAttributes="Bold"
+                    TextColor="White"
+                    HorizontalOptions="Center"/>
+                <Label
+                    Text="Help us find your perfect music match"
+                    FontSize="16"
+                    TextColor="#b3b3b3"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+            <!-- Progress Indicator -->
+            <Frame
+                BackgroundColor="#212121"
+                CornerRadius="10"
+                Padding="15"
+                Margin="0,0,0,20"
+                HasShadow="False">
+                <FlexLayout Direction="Row" JustifyContent="SpaceBetween" AlignItems="Center">
+                    <Label Text="Step 1 of 2" FontSize="14" TextColor="#1db954" FontAttributes="Bold"/>
+                    <Label Text="Basic Info" FontSize="14" TextColor="White"/>
+                </FlexLayout>
+            </Frame>
+
+            <!-- Form Fields -->
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Age Field -->
+                <VerticalStackLayout Spacing="5">
+                    <Label
+                        Text="Age*"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                    <Border
+                        BackgroundColor="#212121"
+                        Stroke="#535353"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="0">
+                        <Entry
+                            x:Name="AgeEntry"
+                            Placeholder="Enter your age (18-120)"
+                            PlaceholderColor="#b3b3b3"
+                            TextColor="White"
+                            BackgroundColor="Transparent"
+                            Keyboard="Numeric"
+                            Margin="15,5"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Gender Picker -->
+                <VerticalStackLayout Spacing="5">
+                    <Label
+                        Text="Gender*"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                    <Border
+                        BackgroundColor="#212121"
+                        Stroke="#535353"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="0">
+                        <Picker
+                            x:Name="GenderPicker"
+                            Title="Select your gender"
+                            TitleColor="#b3b3b3"
+                            TextColor="White"
+                            BackgroundColor="Transparent"
+                            Margin="10,5">
+                            <Picker.Items>
+                                <x:String>Male</x:String>
+                                <x:String>Female</x:String>
+                                <x:String>Non-binary</x:String>
+                                <x:String>Other</x:String>
+                                <x:String>Prefer not to say</x:String>
+                            </Picker.Items>
+                        </Picker>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Sexual Orientation Picker -->
+                <VerticalStackLayout Spacing="5">
+                    <Label
+                        Text="I'm interested in*"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                    <Border
+                        BackgroundColor="#212121"
+                        Stroke="#535353"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="0">
+                        <Picker
+                            x:Name="SexualOrientationPicker"
+                            Title="Select who you're interested in"
+                            TitleColor="#b3b3b3"
+                            TextColor="White"
+                            BackgroundColor="Transparent"
+                            Margin="10,5">
+                            <Picker.Items>
+                                <x:String>Men</x:String>
+                                <x:String>Women</x:String>
+                                <x:String>Everyone</x:String>
+                            </Picker.Items>
+                        </Picker>
+                    </Border>
+                    <Label
+                        Text="This helps us find compatible matches for you"
+                        FontSize="12"
+                        TextColor="#888888"
+                        HorizontalTextAlignment="Center"
+                        Margin="0,5,0,0"/>
+                </VerticalStackLayout>
+
+                <!-- Bio Field -->
+                <VerticalStackLayout Spacing="5">
+                    <Label
+                        Text="About You (Optional)"
+                        FontSize="14"
+                        TextColor="#b3b3b3"/>
+                    <Border
+                        BackgroundColor="#212121"
+                        Stroke="#535353"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="0">
+                        <Editor
+                            x:Name="BioEditor"
+                            Placeholder="Tell us a bit about yourself..."
+                            PlaceholderColor="#b3b3b3"
+                            TextColor="White"
+                            BackgroundColor="Transparent"
+                            HeightRequest="100"
+                            MaxLength="500"
+                            Margin="15,10"
+                            AutoSize="TextChanges"
+                            TextChanged="OnBioTextChanged"/>
+                    </Border>
+                    <Label
+                        x:Name="BioCharCountLabel"
+                        Text="0/500 characters"
+                        FontSize="10"
+                        TextColor="#888888"
+                        HorizontalOptions="End"
+                        Margin="0,-5,0,0"/>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+
+            <!-- Required Fields Notice -->
+            <Label
+                Text="* Required fields"
+                FontSize="12"
+                TextColor="#888888"
+                HorizontalOptions="Center"
+                Margin="0,10,0,0"/>
+
+            <!-- Continue Button -->
+            <Button
+                x:Name="ContinueButton"
+                Text="Continue to Music Selection"
+                FontSize="18"
+                FontAttributes="Bold"
+                TextColor="#121212"
+                BackgroundColor="#1db954"
+                CornerRadius="25"
+                HeightRequest="50"
+                Margin="0,20,0,0"
+                Clicked="OnContinueClicked"/>
+
+            <!-- Skip Button (for testing) -->
+            <Label
+                Text="Skip for now"
+                FontSize="14"
+                TextColor="#888888"
+                HorizontalOptions="Center"
+                Margin="0,10,0,20"
+                IsVisible="False">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSkipClicked" />
+                </Label.GestureRecognizers>
+            </Label>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

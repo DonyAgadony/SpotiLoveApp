@@ -1,4 +1,6 @@
 ﻿using System.Net.Http.Json;
+using System.Text.Json;
+
 namespace SpotiLove;
 
 public partial class MainPage : ContentPage
@@ -22,29 +24,125 @@ public partial class MainPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"UserData.Current.Id: {UserData.Current.Id}");
             System.Diagnostics.Debug.WriteLine($"UserData.Current.Name: {UserData.Current.Name}");
 
-            if (UserData.Current.Id == null)
+            if (UserData.Current.Id == Guid.Empty)
             {
-                System.Diagnostics.Debug.WriteLine("❌ UserData.Current.Id is 0 or negative");
-                await DisplayAlert("Error", "Invalid user ID. Please log in again.", "OK");
-                if (Shell.Current != null)
-                    await Shell.Current.GoToAsync("//Login");
-                else
-                    await Application.Current.MainPage.Navigation.PushAsync(new Login());
+                System.Diagnostics.Debug.WriteLine("❌ UserData.Current.Id is empty");
+                await HandleInvalidSession();
             }
             else
             {
-                await Test(UserData.Current.ToDto());
+                // Validate profile before loading swipes
+                var isValid = await ValidateUserProfileAsync(UserData.Current.Id);
+                if (isValid)
+                {
+                    await Test(UserData.Current.ToDto());
+                }
             }
         }
         else
         {
             System.Diagnostics.Debug.WriteLine("❌ UserData.Current is null");
-            await DisplayAlert("Error", "User data not found. Please log in again.", "OK");
-            if (Shell.Current != null)
-                await Shell.Current.GoToAsync("//Login");
-            else
-                await Application.Current.MainPage.Navigation.PushAsync(new Login());
+            await HandleInvalidSession();
         }
+    }
+
+    private async Task<bool> ValidateUserProfileAsync(Guid userId)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 Validating profile completeness for user {userId}");
+
+            using var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+            var response = await httpClient.GetAsync($"/users/{userId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ User not found in database");
+                await HandleInvalidSession();
+                return false;
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var userResponse = JsonSerializer.Deserialize<UserProfileResponse>(
+                content,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (userResponse?.User == null)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ Failed to deserialize user data");
+                await HandleInvalidSession();
+                return false;
+            }
+
+            var user = userResponse.User;
+
+            // Check if basic profile is incomplete
+            bool isBasicProfileIncomplete = user.Age == 0 ||
+                                           string.IsNullOrEmpty(user.Gender) ||
+                                           string.IsNullOrEmpty(user.SexualOrientation);
+
+            if (isBasicProfileIncomplete)
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ Basic profile incomplete");
+                await DisplayAlert(
+                    "Complete Your Profile",
+                    "Please complete your basic profile information first.",
+                    "OK"
+                );
+                await Navigation.PushAsync(
+                    new CompleteProfilePage(userId, user.Name ?? "User")
+                );
+                return false;
+            }
+
+            // Check if music profile is empty
+            bool isMusicProfileEmpty = user.MusicProfile == null ||
+                                       (user.MusicProfile.FavoriteArtists?.Count == 0 &&
+                                        user.MusicProfile.FavoriteGenres?.Count == 0 &&
+                                        user.MusicProfile.FavoriteSongs?.Count == 0);
+
+            if (isMusicProfileEmpty)
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ Music profile empty");
+                await DisplayAlert(
+                    "Set Up Your Music Profile",
+                    "Let's find your music taste to match you with compatible people!",
+                    "Let's Go"
+                );
+                await Navigation.PushAsync(new ArtistSelectionPage());
+                return false;
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Profile complete - proceeding to load swipes");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Profile validation error: {ex.Message}");
+            await DisplayAlert("Error", "Failed to validate profile. Please try again.", "OK");
+            return false;
+        }
+    }
+
+    private async Task HandleInvalidSession()
+    {
+        await DisplayAlert("Error", "User data not found. Please log in again.", "OK");
+
+        // Clear any stored session
+        SecureStorage.Remove("user_id");
+        SecureStorage.Remove("user_name");
+        SecureStorage.Remove("user_email");
+        SecureStorage.Remove("auth_token");
+
+        UserData.Current = null;
+
+        if (Shell.Current != null)
+            await Shell.Current.GoToAsync("//Login");
+        else
+            await Application.Current.MainPage.Navigation.PushAsync(new Login());
     }
 
     async Task Test(UserDto currentDTO)
@@ -53,14 +151,10 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"=== Test method called with userId: {currentDTO?.Id} ===");
 
-            if (currentDTO == null || currentDTO.Id == null)
+            if (currentDTO == null || currentDTO.Id == Guid.Empty)
             {
                 System.Diagnostics.Debug.WriteLine("❌ Invalid currentDTO");
-                await DisplayAlert("Error", "Invalid user data", "OK");
-                if (Shell.Current != null)
-                    await Shell.Current.GoToAsync("//Login");
-                else
-                    await Application.Current.MainPage.Navigation.PushAsync(new Login());
+                await HandleInvalidSession();
                 return;
             }
 
@@ -69,7 +163,8 @@ public partial class MainPage : ContentPage
 
             System.Diagnostics.Debug.WriteLine($"📊 GetSwipes returned: {(test == null ? "null" : $"{test.Count} users")}");
 
-            if (test != null && test.Count > 0){
+            if (test != null && test.Count > 0)
+            {
                 System.Diagnostics.Debug.WriteLine($"✅ Found {test.Count} users, displaying first user");
                 await UpdateUserDisplay(test[0]);
             }
@@ -118,10 +213,17 @@ public partial class MainPage : ContentPage
 
             if (confirm)
             {
+                // Clear all session data
+                SecureStorage.Remove("user_id");
+                SecureStorage.Remove("user_name");
+                SecureStorage.Remove("user_email");
+                SecureStorage.Remove("auth_token");
+
                 UserData.Current = null;
                 _imageCache.Clear();
                 test = null;
-                await Navigation.PushAsync(new Login());
+
+                await Shell.Current.GoToAsync("//Login");
             }
         }
         catch (Exception ex)
@@ -353,5 +455,11 @@ public partial class MainPage : ContentPage
         {
             System.Diagnostics.Debug.WriteLine($"UpdateUserDisplay error: {ex.Message}");
         }
+    }
+
+    // DTO for API response
+    private class UserProfileResponse
+    {
+        public UserDto? User { get; set; }
     }
 }

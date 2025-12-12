@@ -18,7 +18,7 @@ public partial class Login : ContentPage
         _httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
     }
 
-    private async void OnGoToSignUp(object sender, EventArgs e)
+    public async void OnGoToSignUp(object sender, TappedEventArgs e)
     {
         await Navigation.PushAsync(new SignUp());
     }

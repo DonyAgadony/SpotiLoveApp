@@ -19,9 +19,13 @@
     <ShellContent
         ContentTemplate="{DataTemplate local:SignUp}"
         Route="SignUp" />
+
     <ShellContent
-    ContentTemplate="{DataTemplate local:ArtistSelectionPage}"
-    Route="ArtistSelectionPage" />
-    
+        ContentTemplate="{DataTemplate local:CompleteProfilePage}"
+        Route="CompleteProfilePage" />
+
+    <ShellContent
+        ContentTemplate="{DataTemplate local:ArtistSelectionPage}"
+        Route="ArtistSelectionPage" />
 
 </Shell>
