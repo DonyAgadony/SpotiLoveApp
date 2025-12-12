@@ -1,14 +1,16 @@
-using Microsoft.Maui.Controls;
+﻿using Microsoft.Maui.Controls;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Web;
+using System.Diagnostics;
 
 namespace SpotiLove;
 
 public partial class Login : ContentPage
 {
     private readonly HttpClient _httpClient;
-    private const string API_BASE_URL = "https://spotilove-2.onrender.com";
+    public const string API_BASE_URL = "https://spotilove-2.onrender.com";
 
     public Login()
     {
@@ -169,13 +171,13 @@ public partial class Login : ContentPage
                 "After authorizing with Spotify, you'll be automatically signed in.",
                 "OK");
 
-            await Shell.Current.GoToAsync("//MainPage");
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", $"Unable to connect to Spotify: {ex.Message}", "OK");
         }
     }
+
     private async void OnForgotPassword(object sender, EventArgs e)
     {
         var email = await DisplayPromptAsync("Forgot Password", "Enter your email address:", "Send Reset Link", "Cancel", keyboard: Keyboard.Email);
@@ -220,6 +222,7 @@ public partial class Login : ContentPage
         }
     }
 
+    // DTOs for standard login
     private class LoginResponse
     {
         public bool Success { get; set; }
@@ -232,5 +235,121 @@ public partial class Login : ContentPage
     {
         public bool Success { get; set; }
         public string? Message { get; set; }
+    }
+}
+
+// Handles the callback from the Spotify web Auth deep link.
+public class SpotifyAuthHandlerLogin
+{
+    public static async Task HandleSpotifyCallback(string uri)
+    {
+        try
+        {
+            Debug.WriteLine($"🔐 Processing Spotify callback: {uri}");
+
+            var parsedUri = new Uri(uri);
+            var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
+
+            var token = queryParams["token"];
+            var userIdStr = queryParams["userId"];
+            var isNewUserStr = queryParams["isNewUser"];
+            var name = queryParams["name"];
+
+            Debug.WriteLine($"📋 Parsed params - Token: {token?.Substring(0, 8)}..., UserId: {userIdStr}, IsNew: {isNewUserStr}, Name: {name}");
+
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdStr))
+            {
+                Debug.WriteLine("❌ Missing token or userId in callback");
+                await Shell.Current.DisplayAlert("Error", "Invalid authentication response", "OK");
+                return;
+            }
+
+            if (!Guid.TryParse(userIdStr, out Guid userId))
+            {
+                Debug.WriteLine($"❌ Invalid userId format: {userIdStr}");
+                await Shell.Current.DisplayAlert("Error", "Invalid user ID in response", "OK");
+                return;
+            }
+
+            bool isNewUser = bool.Parse(isNewUserStr ?? "false");
+
+            // Store authentication data
+            await SecureStorage.SetAsync("auth_token", token);
+            await SecureStorage.SetAsync("user_id", userId.ToString());
+            Debug.WriteLine("✅ Saved auth token and user ID to secure storage");
+
+            // Fetch full user profile from API
+            using var httpClient = new HttpClient();
+            // Using the constant from Login class to ensure consistency
+            httpClient.BaseAddress = new Uri(Login.API_BASE_URL);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            Debug.WriteLine($"🌐 Fetching user profile for ID: {userId}");
+            var response = await httpClient.GetAsync($"/users/{userId}");
+            Debug.WriteLine($"📡 API Response: {response.StatusCode}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"📄 Response length: {content.Length} characters");
+
+                var userResponse = JsonSerializer.Deserialize<UserResponse>(
+                    content,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (userResponse?.User != null)
+                {
+                    Debug.WriteLine($"✅ User data deserialized: {userResponse.User.Name}");
+
+                    // Set global user data
+                    UserData.Current = new UserData
+                    {
+                        Id = userResponse.User.Id,
+                        Name = userResponse.User.Name,
+                        Email = userResponse.User.Email,
+                        Age = userResponse.User.Age
+                    };
+
+                    await SecureStorage.SetAsync("user_name", userResponse.User.Name ?? "");
+                    await SecureStorage.SetAsync("user_email", userResponse.User.Email ?? "");
+
+                    Debug.WriteLine($"✅ UserData.Current set: ID={UserData.Current.Id}, Name={UserData.Current.Name}");
+
+                    // Show success message
+                    string message = isNewUser
+                        ? $"Welcome to SpotiLove, {userResponse.User.Name}! Your music profile has been imported from Spotify."
+                        : $"Welcome back, {userResponse.User.Name}! Your music profile has been updated.";
+
+                    await Shell.Current.DisplayAlert("Success", message, "OK");
+
+                    // Navigate to main page
+                    Debug.WriteLine("🚀 Navigating to MainPage...");
+                    await Shell.Current.GoToAsync("//MainPage");
+                }
+                else
+                {
+                    Debug.WriteLine("❌ User data was null after deserialization");
+                    await Shell.Current.DisplayAlert("Error", "Failed to load user profile", "OK");
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"❌ API error: {response.StatusCode}");
+                Debug.WriteLine($"❌ Error content: {errorContent}");
+                await Shell.Current.DisplayAlert("Error", "Failed to fetch user profile from server", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Exception in HandleSpotifyCallback: {ex.Message}");
+            Debug.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+            await Shell.Current.DisplayAlert("Error", $"Failed to complete Spotify authentication: {ex.Message}", "OK");
+        }
+    }
+
+    private class UserResponse
+    {
+        public UserDto? User { get; set; }
     }
 }

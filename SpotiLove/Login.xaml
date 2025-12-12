@@ -14,13 +14,6 @@
                         JustifyContent="SpaceBetween"
                         AlignItems="Center"
                         Margin="0,0,0,20">
-                <Button
-                    Text="← Back"
-                    FontSize="16"
-                    TextColor="#b3b3b3"
-                    BackgroundColor="Transparent"
-                    BorderWidth="0"
-                    Clicked="OnBackClicked"/>
 
                 <Label
                     Text="SpotiLove"

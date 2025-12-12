@@ -269,10 +269,10 @@ public partial class MainPage : ContentPage
                     {
                         GenreTagsContainer.Clear();
 
-                        if (user.MusicProfile != null && !string.IsNullOrEmpty(user.MusicProfile.FavoriteGenres))
+                        if (user.MusicProfile != null && user.MusicProfile.FavoriteGenres != null && user.MusicProfile.FavoriteGenres.Count > 0)
                         {
                             var genres = user.MusicProfile.FavoriteGenres
-                                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Where(g => !string.IsNullOrWhiteSpace(g))
                                 .Select(g => g.Trim())
                                 .Take(3)
                                 .ToList();

@@ -28,7 +28,7 @@ public class SpotifyAuthHandler
                 return;
             }
 
-            if (!int.TryParse(userIdStr, out int userId))
+            if (!Guid.TryParse(userIdStr, out Guid userId))
             {
                 Debug.WriteLine($"❌ Invalid userId format: {userIdStr}");
                 await Shell.Current.DisplayAlert("Error", "Invalid user ID in response", "OK");
@@ -56,7 +56,7 @@ public class SpotifyAuthHandler
                 var content = await response.Content.ReadAsStringAsync();
                 Debug.WriteLine($"📄 Response length: {content.Length} characters");
 
-                var userResponse = System.Text.Json.JsonSerializer.Deserialize<UserResponse>(
+                var userResponse = System.Text.Json.JsonSerializer.Deserialize<ApiUserResponse>(
                     content,
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -111,7 +111,7 @@ public class SpotifyAuthHandler
         }
     }
 
-    private class UserResponse
+    private class ApiUserResponse
     {
         public UserDto? User { get; set; }
     }
