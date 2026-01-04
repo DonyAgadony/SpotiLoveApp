@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+    <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpotiLove.Chats"
+             BackgroundColor="#121212">
+
+    <Grid RowDefinitions="Auto,*" Padding="0">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Padding="20,20,20,10" BackgroundColor="#1a1a1a">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Label 
+                Text="Messages"
+                FontSize="28"
+                FontAttributes="Bold"
+                TextColor="White"
+                VerticalOptions="Center"
+                Grid.Column="0"/>
+
+            <Button
+                Grid.Column="1"
+                Text="✎"
+                FontSize="24"
+                TextColor="#1db954"
+                BackgroundColor="Transparent"
+                WidthRequest="50"
+                HeightRequest="50"
+                CornerRadius="25"
+                Clicked="OnNewChatClicked"/>
+        </Grid>
+
+        <!-- Search Bar -->
+        <Border
+            Grid.Row="1"
+            BackgroundColor="#212121"
+            Stroke="#535353"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 25"
+            Margin="20,10,20,10"
+            VerticalOptions="Start">
+            <SearchBar
+                x:Name="ChatSearchBar"
+                Placeholder="Search messages..."
+                PlaceholderColor="#b3b3b3"
+                TextColor="White"
+                BackgroundColor="Transparent"
+                TextChanged="OnSearchTextChanged"/>
+        </Border>
+
+        <!-- Chat List -->
+        <ScrollView Grid.Row="1" Margin="0,70,0,0">
+            <VerticalStackLayout Spacing="0">
+
+                <!-- Active Chats Section -->
+                <Label
+                    Text="Recent"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    TextColor="#b3b3b3"
+                    Margin="20,10,20,10"/>
+
+                <CollectionView
+                    x:Name="ChatsCollection"
+                    SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border
+                                BackgroundColor="#1a1a1a"
+                                Stroke="Transparent"
+                                StrokeThickness="0"
+                                Margin="10,5">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnChatTapped" CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+
+                                <Grid Padding="15" ColumnDefinitions="60,*,Auto" RowDefinitions="Auto,Auto">
+
+                                    <!-- Profile Picture -->
+                                    <Border
+                                        Grid.Column="0"
+                                        Grid.RowSpan="2"
+                                        StrokeShape="RoundRectangle 30"
+                                        Stroke="{Binding IsOnline, Converter={StaticResource BoolToColorConverter}}"
+                                        StrokeThickness="2"
+                                        BackgroundColor="#535353"
+                                        HeightRequest="60"
+                                        WidthRequest="60"
+                                        VerticalOptions="Center">
+                                        <Image
+                                            Source="{Binding ProfileImage}"
+                                            Aspect="AspectFill"/>
+                                    </Border>
+
+                                    <!-- Name and Last Message -->
+                                    <VerticalStackLayout Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" 
+                                                        Margin="15,0,10,0" 
+                                                        VerticalOptions="Center"
+                                                        Spacing="5">
+                                        <Label
+                                            Text="{Binding Name}"
+                                            FontSize="16"
+                                            FontAttributes="Bold"
+                                            TextColor="White"
+                                            LineBreakMode="TailTruncation"
+                                            MaxLines="1"/>
+
+                                        <Label
+                                            Text="{Binding LastMessage}"
+                                            FontSize="14"
+                                            TextColor="{Binding HasUnread, Converter={StaticResource UnreadMessageColorConverter}}"
+                                            FontAttributes="{Binding HasUnread, Converter={StaticResource UnreadMessageFontConverter}}"
+                                            LineBreakMode="TailTruncation"
+                                            MaxLines="1"/>
+                                    </VerticalStackLayout>
+
+                                    <!-- Time and Badge -->
+                                    <VerticalStackLayout Grid.Column="2" Grid.Row="0" Grid.RowSpan="2"
+                                                        VerticalOptions="Center"
+                                                        HorizontalOptions="End"
+                                                        Spacing="5">
+                                        <Label
+                                            Text="{Binding TimeStamp}"
+                                            FontSize="12"
+                                            TextColor="#888888"
+                                            HorizontalOptions="End"/>
+
+                                        <Frame
+                                            BackgroundColor="#1db954"
+                                            Padding="8,4"
+                                            CornerRadius="12"
+                                            HasShadow="False"
+                                            IsVisible="{Binding HasUnread}"
+                                            HorizontalOptions="End">
+                                            <Label
+                                                Text="{Binding UnreadCount}"
+                                                FontSize="12"
+                                                FontAttributes="Bold"
+                                                TextColor="White"/>
+                                        </Frame>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Empty State -->
+                <VerticalStackLayout
+                    x:Name="EmptyStateView"
+                    IsVisible="False"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    Padding="40"
+                    Spacing="20">
+                    <Label
+                        Text="💬"
+                        FontSize="60"
+                        HorizontalOptions="Center"/>
+                    <Label
+                        Text="No messages yet"
+                        FontSize="20"
+                        FontAttributes="Bold"
+                        TextColor="White"
+                        HorizontalOptions="Center"/>
+                    <Label
+                        Text="Start a conversation with your matches"
+                        FontSize="14"
+                        TextColor="#b3b3b3"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>
