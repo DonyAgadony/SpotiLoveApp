@@ -195,6 +195,35 @@
                     </VerticalStackLayout>
                     
                 </Frame>
+                <Border
+    Grid.RowSpan="3"
+    BackgroundColor="#1db954"
+    StrokeThickness="0"
+    HeightRequest="60"
+    WidthRequest="60"
+    HorizontalOptions="End"
+    VerticalOptions="End"
+    Margin="0,0,20,20"
+    Padding="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="30"/>
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="Black"
+                Offset="0,4"
+                Radius="8"
+                Opacity="0.3" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnChatButtonClicked" />
+                    </Border.GestureRecognizers>
+
+                    <Label
+        Text="💬"
+        FontSize="28"
+        HorizontalOptions="Center"
+        VerticalOptions="Center" />
+                </Border>
             </Grid>
         </ScrollView>
     </Grid>

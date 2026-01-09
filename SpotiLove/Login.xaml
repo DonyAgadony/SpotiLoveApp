@@ -201,6 +201,17 @@
                     HeightRequest="45"
                     Clicked="OnSpotifyLogin"/>
             </VerticalStackLayout>
+            <Button
+    Text="🔧 Test Deep Link"
+    FontSize="14"
+    TextColor="#888888"
+    BackgroundColor="Transparent"
+    BorderColor="#535353"
+    BorderWidth="1"
+    CornerRadius="25"
+    HeightRequest="45"
+    Margin="0,10,0,0"
+    Clicked="OnTestDeepLink"/>
 
             <!-- Footer -->
             <Label

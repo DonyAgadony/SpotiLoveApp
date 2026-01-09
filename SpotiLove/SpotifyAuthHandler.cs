@@ -31,14 +31,14 @@ public class SpotifyAuthHandler
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdStr))
             {
                 Debug.WriteLine("❌ Missing token or userId in callback");
-                await Shell.Current.DisplayAlert("Error", "Invalid authentication response", "OK");
+                await SafeDisplayAlert("Error", "Invalid authentication response");
                 return;
             }
 
             if (!Guid.TryParse(userIdStr, out Guid userId))
             {
                 Debug.WriteLine($"❌ Invalid userId format: {userIdStr}");
-                await Shell.Current.DisplayAlert("Error", "Invalid user ID in response", "OK");
+                await SafeDisplayAlert("Error", "Invalid user ID in response");
                 return;
             }
 
@@ -110,31 +110,53 @@ public class SpotifyAuthHandler
                         if (isProfileIncomplete)
                         {
                             Debug.WriteLine("🚀 Navigating to CompleteProfilePage...");
-                            await Shell.Current.DisplayAlert(
+                            await SafeDisplayAlert(
                                 "Welcome to SpotiLove!",
-                                $"Hi {userResponse.User.Name}! Let's set up your profile.",
-                                "Let's Go"
+                                $"Hi {userResponse.User.Name}! Let's set up your profile."
                             );
-                            await Shell.Current.Navigation.PushAsync(
-                                new CompleteProfilePage(userResponse.User.Id, userResponse.User.Name ?? "")
-                            );
+                            await SafeNavigate(async () =>
+                            {
+                                var mainPage = Application.Current?.MainPage;
+                                if (mainPage != null)
+                                {
+                                    await mainPage.Navigation.PushAsync(
+                                        new CompleteProfilePage(userResponse.User.Id, userResponse.User.Name ?? "")
+                                    );
+                                }
+                            });
                         }
                         else if (isMusicProfileEmpty)
                         {
                             Debug.WriteLine("🚀 Navigating to ArtistSelectionPage...");
-                            await Shell.Current.DisplayAlert(
+                            await SafeDisplayAlert(
                                 "Set Up Your Music Profile",
-                                "Let's find your music taste!",
-                                "Continue"
+                                "Let's find your music taste!"
                             );
-                            await Shell.Current.Navigation.PushAsync(new ArtistSelectionPage());
+                            await SafeNavigate(async () =>
+                            {
+                                var mainPage = Application.Current?.MainPage;
+                                if (mainPage != null)
+                                {
+                                    await mainPage.Navigation.PushAsync(new ArtistSelectionPage());
+                                }
+                            });
                         }
                         else
                         {
                             Debug.WriteLine("🚀 Navigating to MainPage...");
                             string message = $"Welcome back, {userResponse.User.Name}!";
-                            await Shell.Current.DisplayAlert("Success", message, "OK");
-                            await Shell.Current.GoToAsync("//MainPage");
+                            await SafeDisplayAlert("Success", message);
+                            await SafeNavigate(async () =>
+                            {
+                                if (Shell.Current != null)
+                                {
+                                    await Shell.Current.GoToAsync("//MainPage");
+                                }
+                                else
+                                {
+                                    Application.Current.MainPage = new AppShell();
+                                }
+                            });
                         }
                     });
 
@@ -143,7 +165,7 @@ public class SpotifyAuthHandler
                 else
                 {
                     Debug.WriteLine("❌ User data was null after deserialization");
-                    await Shell.Current.DisplayAlert("Error", "Failed to load user profile", "OK");
+                    await SafeDisplayAlert("Error", "Failed to load user profile");
                 }
             }
             else
@@ -151,14 +173,60 @@ public class SpotifyAuthHandler
                 var errorContent = await response.Content.ReadAsStringAsync();
                 Debug.WriteLine($"❌ API error: {response.StatusCode}");
                 Debug.WriteLine($"❌ Error content: {errorContent}");
-                await Shell.Current.DisplayAlert("Error", "Failed to fetch user profile from server", "OK");
+                await SafeDisplayAlert("Error", "Failed to fetch user profile from server");
             }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"❌ Exception in HandleSpotifyCallback: {ex.Message}");
             Debug.WriteLine($"❌ Stack trace: {ex.StackTrace}");
-            await Shell.Current.DisplayAlert("Error", $"Failed to complete Spotify authentication: {ex.Message}", "OK");
+            await SafeDisplayAlert("Error", $"Failed to complete Spotify authentication: {ex.Message}");
+        }
+    }
+
+    // ✅ Safe method to display alerts without depending on Shell.Current
+    private static async Task SafeDisplayAlert(string title, string message)
+    {
+        try
+        {
+            if (Shell.Current != null)
+            {
+                await Shell.Current.DisplayAlert(title, message, "OK");
+            }
+            else if (Application.Current?.MainPage != null)
+            {
+                await Application.Current.MainPage.DisplayAlert(title, message, "OK");
+            }
+            else
+            {
+                Debug.WriteLine($"⚠️ Cannot display alert - no main page available: {title}: {message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Failed to display alert: {ex.Message}");
+        }
+    }
+
+    // ✅ Safe method to navigate without depending on Shell.Current
+    private static async Task SafeNavigate(Func<Task> navigationAction)
+    {
+        try
+        {
+            await navigationAction();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Navigation error: {ex.Message}");
+            // Fallback: Try to set a new AppShell as MainPage
+            try
+            {
+                Application.Current.MainPage = new AppShell();
+            }
+            catch (Exception fallbackEx)
+            {
+                Debug.WriteLine($"❌ Fallback navigation also failed: {fallbackEx.Message}");
+            }
         }
     }
 

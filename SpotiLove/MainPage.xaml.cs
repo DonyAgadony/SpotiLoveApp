@@ -187,6 +187,17 @@ public partial class MainPage : ContentPage
             await DisplayAlert("Error", $"Failed to load users: {ex.Message}", "OK");
         }
     }
+    private async void OnChatButtonClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            await Navigation.PushAsync(new Chats());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Navigation error: {ex.Message}");
+        }
+    }
 
     private async void OnGoToSignUp(object sender, EventArgs e)
     {

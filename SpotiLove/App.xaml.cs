@@ -7,6 +7,8 @@ namespace SpotiLove
         public App()
         {
             InitializeComponent();
+
+            // ✅ Initialize with AppShell immediately
             MainPage = new AppShell();
         }
 
@@ -93,9 +95,13 @@ namespace SpotiLove
                     System.Diagnostics.Debug.WriteLine("⚠️ Basic profile incomplete - navigating to CompleteProfilePage");
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
-                        await MainPage.Navigation.PushAsync(
-                            new CompleteProfilePage(userId, userName ?? "User")
-                        );
+                        // ✅ Safe navigation check
+                        if (MainPage?.Navigation != null)
+                        {
+                            await MainPage.Navigation.PushAsync(
+                                new CompleteProfilePage(userId, userName ?? "User")
+                            );
+                        }
                     });
                 }
                 else if (isMusicProfileEmpty)
@@ -103,12 +109,20 @@ namespace SpotiLove
                     System.Diagnostics.Debug.WriteLine("⚠️ Music profile empty - navigating to ArtistSelectionPage");
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
-                        await MainPage.DisplayAlert(
-                            "Complete Your Profile",
-                            "Let's set up your music preferences to find great matches!",
-                            "Continue"
-                        );
-                        await MainPage.Navigation.PushAsync(new ArtistSelectionPage());
+                        // ✅ Safe navigation check
+                        if (MainPage != null)
+                        {
+                            await MainPage.DisplayAlert(
+                                "Complete Your Profile",
+                                "Let's set up your music preferences to find great matches!",
+                                "Continue"
+                            );
+
+                            if (MainPage.Navigation != null)
+                            {
+                                await MainPage.Navigation.PushAsync(new ArtistSelectionPage());
+                            }
+                        }
                     });
                 }
                 else
@@ -121,16 +135,19 @@ namespace SpotiLove
                 System.Diagnostics.Debug.WriteLine($"⏱️ Request timed out: {ex.Message}");
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    var retry = await MainPage.DisplayAlert(
-                        "Connection Timeout",
-                        "The server is taking too long to respond. Retry?",
-                        "Retry",
-                        "Continue Anyway"
-                    );
-
-                    if (retry)
+                    if (MainPage != null)
                     {
-                        await ValidateUserProfile(userId, userName);
+                        var retry = await MainPage.DisplayAlert(
+                            "Connection Timeout",
+                            "The server is taking too long to respond. Retry?",
+                            "Retry",
+                            "Continue Anyway"
+                        );
+
+                        if (retry)
+                        {
+                            await ValidateUserProfile(userId, userName);
+                        }
                     }
                 });
             }
@@ -153,41 +170,110 @@ namespace SpotiLove
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                await MainPage.DisplayAlert(
-                    "Session Expired",
-                    "Your session has expired. Please log in again.",
-                    "OK"
-                );
-                await Shell.Current.GoToAsync("//Login");
+                if (MainPage != null)
+                {
+                    await MainPage.DisplayAlert(
+                        "Session Expired",
+                        "Your session has expired. Please log in again.",
+                        "OK"
+                    );
+                }
+
+                // ✅ Safe navigation to Login
+                if (Shell.Current != null)
+                {
+                    await Shell.Current.GoToAsync("//Login");
+                }
+                else
+                {
+                    // Recreate AppShell to go to Login page
+                    MainPage = new AppShell();
+                }
             });
         }
 
         // ✅ CRITICAL: Handle Deep Links
+        // Replace the OnAppLinkRequestReceived method in App.xaml.cs
+
         protected override async void OnAppLinkRequestReceived(Uri uri)
         {
             base.OnAppLinkRequestReceived(uri);
 
-            System.Diagnostics.Debug.WriteLine($"🔗 Deep link received: {uri}");
+            System.Diagnostics.Debug.WriteLine("=================================================");
+            System.Diagnostics.Debug.WriteLine($"🔗 DEEP LINK RECEIVED!");
+            System.Diagnostics.Debug.WriteLine($"   Full URI: {uri}");
             System.Diagnostics.Debug.WriteLine($"   Scheme: {uri.Scheme}");
             System.Diagnostics.Debug.WriteLine($"   Host: {uri.Host}");
             System.Diagnostics.Debug.WriteLine($"   Path: {uri.AbsolutePath}");
             System.Diagnostics.Debug.WriteLine($"   Query: {uri.Query}");
+            System.Diagnostics.Debug.WriteLine("=================================================");
 
-            if (uri.Scheme == "spotilove" && uri.Host == "auth")
+            try
             {
-                System.Diagnostics.Debug.WriteLine("✅ Valid Spotify callback detected - processing...");
+                if (uri.Scheme == "spotilove")
+                {
+                    System.Diagnostics.Debug.WriteLine("✅ SpotiLove scheme detected");
 
-                // Give UI time to be ready
-                await Task.Delay(500);
+                    if (uri.Host == "auth")
+                    {
+                        System.Diagnostics.Debug.WriteLine("✅ Auth callback detected");
 
-                await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
+                        // Give the app UI time to be ready
+                        await Task.Delay(500);
+
+                        // Check for success or error
+                        if (uri.AbsolutePath.Contains("success") || uri.Query.Contains("token"))
+                        {
+                            System.Diagnostics.Debug.WriteLine("✅ Success callback - processing...");
+                            await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
+                        }
+                        else if (uri.AbsolutePath.Contains("error") || uri.Query.Contains("error"))
+                        {
+                            System.Diagnostics.Debug.WriteLine("❌ Error callback detected");
+                            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                            var errorMessage = queryParams["message"] ?? "Authentication failed";
+
+                            await MainThread.InvokeOnMainThreadAsync(async () =>
+                            {
+                                if (MainPage != null)
+                                {
+                                    await MainPage.DisplayAlert("Authentication Error", errorMessage, "OK");
+                                }
+                            });
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"⚠️ Unknown auth path: {uri.AbsolutePath}");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Unknown host: {uri.Host}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Unknown scheme: {uri.Scheme}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Unhandled deep link: {uri.Scheme}://{uri.Host}");
+                System.Diagnostics.Debug.WriteLine($"❌ Error handling deep link: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    if (MainPage != null)
+                    {
+                        await MainPage.DisplayAlert(
+                            "Error",
+                            $"Failed to process authentication: {ex.Message}",
+                            "OK"
+                        );
+                    }
+                });
             }
         }
-
         // DTO for API response
         private class UserProfileResponse
         {
