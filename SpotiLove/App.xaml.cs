@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Diagnostics;
 
 namespace SpotiLove
 {
@@ -10,14 +11,18 @@ namespace SpotiLove
 
             // ✅ Initialize with AppShell immediately
             MainPage = new AppShell();
+
+            // ✅ CRITICAL: Register handler for query parameters (alternative to deep links)
+            Routing.RegisterRoute("auth", typeof(Login));
         }
 
         protected override async void OnStart()
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("🚀 App OnStart called");
+                Debug.WriteLine("🚀 App OnStart called");
 
+                // Check for saved session
                 var userId = await SecureStorage.GetAsync("user_id");
                 if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out Guid id))
                 {
@@ -31,19 +36,17 @@ namespace SpotiLove
                         Email = email
                     };
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Restored user session: Id={id}, Name={name}");
-
-                    // Validate profile with better error handling
+                    Debug.WriteLine($"✅ Restored user session: Id={id}, Name={name}");
                     await ValidateUserProfile(id, name);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("⚠️ No saved user session found - staying on login page");
+                    Debug.WriteLine("⚠️ No saved user session found");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ OnStart restore error: {ex.Message}");
+                Debug.WriteLine($"❌ OnStart restore error: {ex.Message}");
             }
         }
 
@@ -51,7 +54,7 @@ namespace SpotiLove
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"🔍 Validating profile completeness for user {userId}");
+                Debug.WriteLine($"🔍 Validating profile completeness for user {userId}");
 
                 using var httpClient = new HttpClient();
                 httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
@@ -61,7 +64,7 @@ namespace SpotiLove
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ User not found in database (Status: {response.StatusCode})");
+                    Debug.WriteLine($"❌ User not found in database (Status: {response.StatusCode})");
                     await HandleInvalidUser();
                     return;
                 }
@@ -73,7 +76,7 @@ namespace SpotiLove
 
                 if (userResponse?.User == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("❌ Failed to deserialize user data");
+                    Debug.WriteLine("❌ Failed to deserialize user data");
                     await HandleInvalidUser();
                     return;
                 }
@@ -92,10 +95,9 @@ namespace SpotiLove
 
                 if (isProfileIncomplete)
                 {
-                    System.Diagnostics.Debug.WriteLine("⚠️ Basic profile incomplete - navigating to CompleteProfilePage");
+                    Debug.WriteLine("⚠️ Basic profile incomplete");
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
-                        // ✅ Safe navigation check
                         if (MainPage?.Navigation != null)
                         {
                             await MainPage.Navigation.PushAsync(
@@ -106,15 +108,14 @@ namespace SpotiLove
                 }
                 else if (isMusicProfileEmpty)
                 {
-                    System.Diagnostics.Debug.WriteLine("⚠️ Music profile empty - navigating to ArtistSelectionPage");
+                    Debug.WriteLine("⚠️ Music profile empty");
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
-                        // ✅ Safe navigation check
                         if (MainPage != null)
                         {
                             await MainPage.DisplayAlert(
                                 "Complete Your Profile",
-                                "Let's set up your music preferences to find great matches!",
+                                "Let's set up your music preferences!",
                                 "Continue"
                             );
 
@@ -127,39 +128,18 @@ namespace SpotiLove
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("✅ Profile complete - user can proceed to MainPage");
+                    Debug.WriteLine("✅ Profile complete");
                 }
-            }
-            catch (TaskCanceledException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"⏱️ Request timed out: {ex.Message}");
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    if (MainPage != null)
-                    {
-                        var retry = await MainPage.DisplayAlert(
-                            "Connection Timeout",
-                            "The server is taking too long to respond. Retry?",
-                            "Retry",
-                            "Continue Anyway"
-                        );
-
-                        if (retry)
-                        {
-                            await ValidateUserProfile(userId, userName);
-                        }
-                    }
-                });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Profile validation error: {ex.Message}");
+                Debug.WriteLine($"❌ Profile validation error: {ex.Message}");
             }
         }
 
         private async Task HandleInvalidUser()
         {
-            System.Diagnostics.Debug.WriteLine("🔄 Clearing invalid session and returning to login");
+            Debug.WriteLine("🔄 Clearing invalid session");
 
             SecureStorage.Remove("user_id");
             SecureStorage.Remove("user_name");
@@ -174,62 +154,55 @@ namespace SpotiLove
                 {
                     await MainPage.DisplayAlert(
                         "Session Expired",
-                        "Your session has expired. Please log in again.",
+                        "Please log in again.",
                         "OK"
                     );
                 }
 
-                // ✅ Safe navigation to Login
                 if (Shell.Current != null)
                 {
                     await Shell.Current.GoToAsync("//Login");
                 }
                 else
                 {
-                    // Recreate AppShell to go to Login page
                     MainPage = new AppShell();
                 }
             });
         }
 
-        // ✅ CRITICAL: Handle Deep Links
-        // Replace the OnAppLinkRequestReceived method in App.xaml.cs
-
+        // ✅ CRITICAL FIX: Handle Deep Links
         protected override async void OnAppLinkRequestReceived(Uri uri)
         {
             base.OnAppLinkRequestReceived(uri);
 
-            System.Diagnostics.Debug.WriteLine("=================================================");
-            System.Diagnostics.Debug.WriteLine($"🔗 DEEP LINK RECEIVED!");
-            System.Diagnostics.Debug.WriteLine($"   Full URI: {uri}");
-            System.Diagnostics.Debug.WriteLine($"   Scheme: {uri.Scheme}");
-            System.Diagnostics.Debug.WriteLine($"   Host: {uri.Host}");
-            System.Diagnostics.Debug.WriteLine($"   Path: {uri.AbsolutePath}");
-            System.Diagnostics.Debug.WriteLine($"   Query: {uri.Query}");
-            System.Diagnostics.Debug.WriteLine("=================================================");
+            Debug.WriteLine("=================================================");
+            Debug.WriteLine($"🔗 DEEP LINK RECEIVED!");
+            Debug.WriteLine($"   Full URI: {uri}");
+            Debug.WriteLine($"   Scheme: {uri.Scheme}");
+            Debug.WriteLine($"   Host: {uri.Host}");
+            Debug.WriteLine($"   Path: {uri.AbsolutePath}");
+            Debug.WriteLine($"   Query: {uri.Query}");
+            Debug.WriteLine("=================================================");
 
             try
             {
-                if (uri.Scheme == "spotilove")
+                if (uri.Scheme.ToLower() == "spotilove")
                 {
-                    System.Diagnostics.Debug.WriteLine("✅ SpotiLove scheme detected");
+                    Debug.WriteLine("✅ SpotiLove scheme detected");
 
-                    if (uri.Host == "auth")
+                    if (uri.Host.ToLower() == "auth")
                     {
-                        System.Diagnostics.Debug.WriteLine("✅ Auth callback detected");
+                        Debug.WriteLine("✅ Auth callback detected");
+                        await Task.Delay(500); // Give UI time to be ready
 
-                        // Give the app UI time to be ready
-                        await Task.Delay(500);
-
-                        // Check for success or error
                         if (uri.AbsolutePath.Contains("success") || uri.Query.Contains("token"))
                         {
-                            System.Diagnostics.Debug.WriteLine("✅ Success callback - processing...");
+                            Debug.WriteLine("✅ Success callback - processing...");
                             await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
                         }
                         else if (uri.AbsolutePath.Contains("error") || uri.Query.Contains("error"))
                         {
-                            System.Diagnostics.Debug.WriteLine("❌ Error callback detected");
+                            Debug.WriteLine("❌ Error callback detected");
                             var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
                             var errorMessage = queryParams["message"] ?? "Authentication failed";
 
@@ -241,39 +214,23 @@ namespace SpotiLove
                                 }
                             });
                         }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"⚠️ Unknown auth path: {uri.AbsolutePath}");
-                        }
                     }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"⚠️ Unknown host: {uri.Host}");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Unknown scheme: {uri.Scheme}");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Error handling deep link: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                Debug.WriteLine($"❌ Error handling deep link: {ex.Message}");
 
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
                     if (MainPage != null)
                     {
-                        await MainPage.DisplayAlert(
-                            "Error",
-                            $"Failed to process authentication: {ex.Message}",
-                            "OK"
-                        );
+                        await MainPage.DisplayAlert("Error", $"Failed to process authentication: {ex.Message}", "OK");
                     }
                 });
             }
         }
+
         // DTO for API response
         private class UserProfileResponse
         {

@@ -16,6 +16,29 @@ public partial class Login : ContentPage
     {
         InitializeComponent();
         _httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
+
+        // ✅ Check for pending deep links when login page loads
+        CheckForPendingDeepLink();
+    }
+
+    private async void CheckForPendingDeepLink()
+    {
+        try
+        {
+            await Task.Delay(500); // Give UI time to load
+
+            var pendingLink = Preferences.Get("pending_deep_link", null);
+            if (!string.IsNullOrEmpty(pendingLink))
+            {
+                Debug.WriteLine($"📋 Processing pending deep link: {pendingLink}");
+                Preferences.Remove("pending_deep_link");
+                await SpotifyAuthHandler.HandleSpotifyCallback(pendingLink);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Error checking pending deep link: {ex.Message}");
+        }
     }
 
     public async void OnGoToSignUp(object sender, TappedEventArgs e)
@@ -112,7 +135,6 @@ public partial class Login : ContentPage
                 if (!string.IsNullOrEmpty(loginResponse.Token))
                     await SecureStorage.SetAsync("auth_token", loginResponse.Token);
 
-                // ✅ FIX: Navigate properly without Shell.Current
                 await NavigateToMainPage();
                 return;
             }
@@ -133,49 +155,21 @@ public partial class Login : ContentPage
         }
     }
 
-    // Replace the OnSpotifyLogin method in Login.xaml.cs
-
     private async void OnSpotifyLogin(object sender, EventArgs e)
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("🎵 Spotify login button clicked");
+            Debug.WriteLine("🎵 Spotify login button clicked");
 
             var spotifyLoginUrl = $"{API_BASE_URL}/login";
-            System.Diagnostics.Debug.WriteLine($"🔗 Opening URL: {spotifyLoginUrl}");
+            Debug.WriteLine($"🔗 Opening URL: {spotifyLoginUrl}");
 
-            // Show loading indicator
-            var loadingPage = new ContentPage
-            {
-                Content = new VerticalStackLayout
-                {
-                    VerticalOptions = LayoutOptions.Center,
-                    HorizontalOptions = LayoutOptions.Center,
-                    Spacing = 20,
-                    Children =
-                {
-                    new ActivityIndicator
-                    {
-                        IsRunning = true,
-                        Color = Color.FromArgb("#1db954"),
-                        WidthRequest = 50,
-                        HeightRequest = 50
-                    },
-                    new Label
-                    {
-                        Text = "Opening Spotify...",
-                        TextColor = Colors.White,
-                        FontSize = 16
-                    }
-                }
-                },
-                BackgroundColor = Color.FromArgb("#121212")
-            };
-
-            await Navigation.PushModalAsync(loadingPage, false);
-
-            // Try to open Spotify login in browser
-            System.Diagnostics.Debug.WriteLine("🌐 Attempting to open browser...");
+            // Show a message to the user
+            await DisplayAlert(
+                "Spotify Login",
+                "You'll be redirected to Spotify to authorize. After authorizing, you'll be redirected back to the app.",
+                "Continue"
+            );
 
             var browserOptions = new BrowserLaunchOptions
             {
@@ -186,68 +180,39 @@ public partial class Login : ContentPage
             };
 
             var result = await Browser.OpenAsync(spotifyLoginUrl, browserOptions);
-
-            System.Diagnostics.Debug.WriteLine($"✅ Browser.OpenAsync result: {result}");
-
-            // Close loading page
-            await Navigation.PopModalAsync(false);
+            Debug.WriteLine($"✅ Browser.OpenAsync result: {result}");
 
             if (!result)
             {
-                System.Diagnostics.Debug.WriteLine("❌ Browser failed to open");
-                await DisplayAlert(
-                    "Error",
-                    "Could not open Spotify login page. Please check your internet connection.",
-                    "OK"
-                );
-                return;
+                Debug.WriteLine("❌ Browser failed to open");
+                await DisplayAlert("Error", "Could not open Spotify login page.", "OK");
             }
-
-            System.Diagnostics.Debug.WriteLine("✅ Browser opened successfully");
-            System.Diagnostics.Debug.WriteLine("⏳ Waiting for Spotify callback...");
-
-            // Inform user
-            await DisplayAlert(
-                "Spotify Login",
-                "Please authorize SpotiLove in your browser. You'll be redirected back automatically.",
-                "OK"
-            );
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Spotify login error: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-
-            // Make sure to close loading page if still open
-            if (Navigation.ModalStack.Count > 0)
-            {
-                await Navigation.PopModalAsync(false);
-            }
-
-            await DisplayAlert(
-                "Error",
-                $"Failed to open Spotify login: {ex.Message}",
-                "OK"
-            );
+            Debug.WriteLine($"❌ Spotify login error: {ex.Message}");
+            await DisplayAlert("Error", $"Failed to open Spotify login: {ex.Message}", "OK");
         }
     }
+
     private async void OnTestDeepLink(object sender, EventArgs e)
     {
         try
         {
-            var testUrl = "spotilove://auth/success?token=test-token-123&userId=00000000-0000-0000-0000-000000000001&isNewUser=false&name=Test User";
+            // Create a test URI that mimics what Spotify would send back
+            var testUrl = "spotilove://auth/success?token=test-token-123&userId=00000000-0000-0000-0000-000000000001&isNewUser=false&name=Test%20User";
 
-            System.Diagnostics.Debug.WriteLine($"🧪 Testing deep link: {testUrl}");
+            Debug.WriteLine($"🧪 Testing deep link: {testUrl}");
 
-            await Browser.OpenAsync(testUrl);
-
-            await DisplayAlert("Test", "Deep link triggered. Check debug output.", "OK");
+            // Directly call the handler instead of trying to open the URL
+            await SpotifyAuthHandler.HandleSpotifyCallback(testUrl);
         }
         catch (Exception ex)
         {
             await DisplayAlert("Test Failed", ex.Message, "OK");
         }
     }
+
     private async void OnForgotPassword(object sender, EventArgs e)
     {
         var email = await DisplayPromptAsync("Forgot Password", "Enter your email address:", "Send Reset Link", "Cancel", keyboard: Keyboard.Email);
@@ -303,19 +268,16 @@ public partial class Login : ContentPage
         }
     }
 
-    // ✅ NEW: Proper navigation method
     private async Task NavigateToMainPage()
     {
         try
         {
-            // Check if Shell.Current exists
             if (Shell.Current != null)
             {
                 await Shell.Current.GoToAsync("//MainPage");
             }
             else
             {
-                // Fallback: Replace the entire app with a new AppShell
                 Debug.WriteLine("⚠️ Shell.Current is null, creating new AppShell");
                 Application.Current.MainPage = new AppShell();
             }
@@ -323,12 +285,10 @@ public partial class Login : ContentPage
         catch (Exception ex)
         {
             Debug.WriteLine($"❌ Navigation error: {ex.Message}");
-            // Final fallback: Direct navigation
             Application.Current.MainPage = new NavigationPage(new MainPage());
         }
     }
 
-    // DTOs for standard login
     private class LoginResponse
     {
         public bool Success { get; set; }
@@ -341,167 +301,5 @@ public partial class Login : ContentPage
     {
         public bool Success { get; set; }
         public string? Message { get; set; }
-    }
-}
-
-// Handles the callback from the Spotify web Auth deep link.
-public class SpotifyAuthHandlerLogin
-{
-    public static async Task HandleSpotifyCallback(string uri)
-    {
-        try
-        {
-            Debug.WriteLine($"🔐 Processing Spotify callback: {uri}");
-
-            var parsedUri = new Uri(uri);
-            var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
-
-            var token = queryParams["token"];
-            var userIdStr = queryParams["userId"];
-            var isNewUserStr = queryParams["isNewUser"];
-            var name = queryParams["name"];
-
-            Debug.WriteLine($"📋 Parsed params - Token: {token?.Substring(0, 8)}..., UserId: {userIdStr}, IsNew: {isNewUserStr}, Name: {name}");
-
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdStr))
-            {
-                Debug.WriteLine("❌ Missing token or userId in callback");
-                await ShowAlert("Error", "Invalid authentication response");
-                return;
-            }
-
-            if (!Guid.TryParse(userIdStr, out Guid userId))
-            {
-                Debug.WriteLine($"❌ Invalid userId format: {userIdStr}");
-                await ShowAlert("Error", "Invalid user ID in response");
-                return;
-            }
-
-            bool isNewUser = bool.Parse(isNewUserStr ?? "false");
-
-            // Store authentication data
-            await SecureStorage.SetAsync("auth_token", token);
-            await SecureStorage.SetAsync("user_id", userId.ToString());
-            Debug.WriteLine("✅ Saved auth token and user ID to secure storage");
-
-            // Fetch full user profile from API
-            using var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(Login.API_BASE_URL);
-            httpClient.Timeout = TimeSpan.FromSeconds(30);
-
-            Debug.WriteLine($"🌐 Fetching user profile for ID: {userId}");
-            var response = await httpClient.GetAsync($"/users/{userId}");
-            Debug.WriteLine($"📡 API Response: {response.StatusCode}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                Debug.WriteLine($"📄 Response length: {content.Length} characters");
-
-                var userResponse = JsonSerializer.Deserialize<UserResponse>(
-                    content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                if (userResponse?.User != null)
-                {
-                    Debug.WriteLine($"✅ User data deserialized: {userResponse.User.Name}");
-
-                    // Set global user data
-                    UserData.Current = new UserData
-                    {
-                        Id = userResponse.User.Id,
-                        Name = userResponse.User.Name,
-                        Email = userResponse.User.Email,
-                        Age = userResponse.User.Age
-                    };
-
-                    await SecureStorage.SetAsync("user_name", userResponse.User.Name ?? "");
-                    await SecureStorage.SetAsync("user_email", userResponse.User.Email ?? "");
-
-                    Debug.WriteLine($"✅ UserData.Current set: ID={UserData.Current.Id}, Name={UserData.Current.Name}");
-
-                    // Show success message
-                    string message = isNewUser
-                        ? $"Welcome to SpotiLove, {userResponse.User.Name}! Your music profile has been imported from Spotify."
-                        : $"Welcome back, {userResponse.User.Name}! Your music profile has been updated.";
-
-                    await ShowAlert("Success", message);
-
-                    // Navigate to main page
-                    Debug.WriteLine("🚀 Navigating to MainPage...");
-                    await NavigateToMain();
-                }
-                else
-                {
-                    Debug.WriteLine("❌ User data was null after deserialization");
-                    await ShowAlert("Error", "Failed to load user profile");
-                }
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Debug.WriteLine($"❌ API error: {response.StatusCode}");
-                Debug.WriteLine($"❌ Error content: {errorContent}");
-                await ShowAlert("Error", "Failed to fetch user profile from server");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"❌ Exception in HandleSpotifyCallback: {ex.Message}");
-            Debug.WriteLine($"❌ Stack trace: {ex.StackTrace}");
-            await ShowAlert("Error", $"Failed to complete Spotify authentication: {ex.Message}");
-        }
-    }
-
-    // ✅ Helper method to show alerts without Shell.Current
-    private static async Task ShowAlert(string title, string message)
-    {
-        try
-        {
-            if (Shell.Current != null)
-            {
-                await Shell.Current.DisplayAlert(title, message, "OK");
-            }
-            else if (Application.Current?.MainPage != null)
-            {
-                await Application.Current.MainPage.DisplayAlert(title, message, "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"❌ Failed to show alert: {ex.Message}");
-        }
-    }
-
-    // ✅ Helper method to navigate without Shell.Current
-    private static async Task NavigateToMain()
-    {
-        try
-        {
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                if (Shell.Current != null)
-                {
-                    Shell.Current.GoToAsync("//MainPage");
-                }
-                else
-                {
-                    Application.Current.MainPage = new AppShell();
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"❌ Navigation error: {ex.Message}");
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                Application.Current.MainPage = new NavigationPage(new MainPage());
-            });
-        }
-    }
-
-    private class UserResponse
-    {
-        public UserDto? User { get; set; }
     }
 }
