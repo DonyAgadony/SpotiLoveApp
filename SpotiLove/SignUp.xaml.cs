@@ -8,7 +8,7 @@ namespace SpotiLove;
 public partial class SignUp : ContentPage
 {
     private readonly HttpClient _httpClient;
-    private const string API_BASE_URL = "https://spotilove-2.onrender.com";
+    private const string API_BASE_URL = "https://spotilove.danielnaz.com";
     private string? _selectedImageBase64;
 
     public SignUp()

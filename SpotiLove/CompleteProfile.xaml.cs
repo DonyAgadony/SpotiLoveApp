@@ -6,7 +6,7 @@ namespace SpotiLove;
 public partial class CompleteProfilePage : ContentPage
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl = "https://spotilove-2.onrender.com";
+    private readonly string _apiBaseUrl = "https://spotilove.danielnaz.com";
     private Guid _userId;
     private string _userName;
 

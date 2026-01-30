@@ -9,10 +9,10 @@ namespace SpotiLove
         {
             InitializeComponent();
 
-            // ✅ Initialize with AppShell immediately
+            //Initialize with AppShell immediately
             MainPage = new AppShell();
 
-            // ✅ CRITICAL: Register handler for query parameters (alternative to deep links)
+            // Register handler for query parameters (alternative to deep links)
             Routing.RegisterRoute("auth", typeof(Login));
         }
 
@@ -37,7 +37,7 @@ namespace SpotiLove
                     };
 
                     Debug.WriteLine($"✅ Restored user session: Id={id}, Name={name}");
-                    await ValidateUserProfile(id, name);
+                    await ValidateUserProfile(id, name, "https://spotilove.danielnaz.com");
                 }
                 else
                 {
@@ -50,14 +50,14 @@ namespace SpotiLove
             }
         }
 
-        private async Task ValidateUserProfile(Guid userId, string? userName)
+        private async Task ValidateUserProfile(Guid userId, string? userName, string uriString)
         {
             try
             {
                 Debug.WriteLine($"🔍 Validating profile completeness for user {userId}");
 
                 using var httpClient = new HttpClient();
-                httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
+                httpClient.BaseAddress = new Uri(uriString);
                 httpClient.Timeout = TimeSpan.FromSeconds(30);
 
                 var response = await httpClient.GetAsync($"/users/{userId}");
@@ -139,7 +139,7 @@ namespace SpotiLove
 
         private async Task HandleInvalidUser()
         {
-            Debug.WriteLine("🔄 Clearing invalid session");
+            Debug.WriteLine("Clearing invalid session");
 
             SecureStorage.Remove("user_id");
             SecureStorage.Remove("user_name");
@@ -170,7 +170,7 @@ namespace SpotiLove
             });
         }
 
-        // ✅ CRITICAL FIX: Handle Deep Links
+        //Handle Deep Links
         protected override async void OnAppLinkRequestReceived(Uri uri)
         {
             base.OnAppLinkRequestReceived(uri);
@@ -186,51 +186,37 @@ namespace SpotiLove
 
             try
             {
-                if (uri.Scheme.ToLower() == "spotilove")
+                // Add delay to ensure UI is ready
+                await Task.Delay(500);
+
+                if (uri.Scheme.ToLower() == "spotilove" && uri.Host.ToLower() == "auth")
                 {
-                    Debug.WriteLine("✅ SpotiLove scheme detected");
-
-                    if (uri.Host.ToLower() == "auth")
+                    if (uri.AbsolutePath.Contains("success") || uri.Query.Contains("token"))
                     {
-                        Debug.WriteLine("✅ Auth callback detected");
-                        await Task.Delay(500); // Give UI time to be ready
+                        Debug.WriteLine("✅ Success callback - processing...");
+                        await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
+                    }
+                    else if (uri.AbsolutePath.Contains("error"))
+                    {
+                        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                        var errorMessage = queryParams["message"] ?? "Authentication failed";
 
-                        if (uri.AbsolutePath.Contains("success") || uri.Query.Contains("token"))
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
                         {
-                            Debug.WriteLine("✅ Success callback - processing...");
-                            await SpotifyAuthHandler.HandleSpotifyCallback(uri.ToString());
-                        }
-                        else if (uri.AbsolutePath.Contains("error") || uri.Query.Contains("error"))
-                        {
-                            Debug.WriteLine("❌ Error callback detected");
-                            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
-                            var errorMessage = queryParams["message"] ?? "Authentication failed";
-
-                            await MainThread.InvokeOnMainThreadAsync(async () =>
-                            {
-                                if (MainPage != null)
-                                {
-                                    await MainPage.DisplayAlert("Authentication Error", errorMessage, "OK");
-                                }
-                            });
-                        }
+                            await MainPage.DisplayAlert("Authentication Error", errorMessage, "OK");
+                        });
                     }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Error handling deep link: {ex.Message}");
-
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    if (MainPage != null)
-                    {
-                        await MainPage.DisplayAlert("Error", $"Failed to process authentication: {ex.Message}", "OK");
-                    }
+                    await MainPage.DisplayAlert("Error", $"Failed to process authentication: {ex.Message}", "OK");
                 });
             }
         }
-
         // DTO for API response
         private class UserProfileResponse
         {

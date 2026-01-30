@@ -30,7 +30,7 @@ namespace SpotiLove
                 }
 
                 using var client = new HttpClient();
-                client.BaseAddress = new Uri("https://spotilove-2.onrender.com");
+                client.BaseAddress = new Uri("https://spotilove.danielnaz.com");
                 client.Timeout = TimeSpan.FromSeconds(30);
 
                 var url = $"users?userId={current.Id}&count=10";

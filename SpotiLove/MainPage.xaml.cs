@@ -53,7 +53,7 @@ public partial class MainPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"🔍 Validating profile completeness for user {userId}");
 
             using var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
+            httpClient.BaseAddress = new Uri("https://spotilove.danielnaz.com");
             httpClient.Timeout = TimeSpan.FromSeconds(10);
 
             var response = await httpClient.GetAsync($"/users/{userId}");
@@ -251,7 +251,7 @@ public partial class MainPage : ContentPage
             var current = UserData.Current.Id;
             var target = test[0].Id;
 
-            using var client = new HttpClient { BaseAddress = new Uri("https://spotilove-2.onrender.com/") };
+            using var client = new HttpClient { BaseAddress = new Uri("https://spotilove.danielnaz.com/") };
             var response = await client.PostAsJsonAsync("/swipe", new LikeDto(current, target, true));
             var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
 
@@ -273,7 +273,7 @@ public partial class MainPage : ContentPage
             var current = UserData.Current.Id;
             var target = test[0].Id;
 
-            using var client = new HttpClient { BaseAddress = new Uri("https://spotilove-2.onrender.com/") };
+            using var client = new HttpClient { BaseAddress = new Uri("https://spotilove.danielnaz.com/") };
             var response = await client.PostAsJsonAsync("/swipe", new LikeDto(current, target, false));
             var result = await response.Content.ReadFromJsonAsync<ResponseMessage>();
 

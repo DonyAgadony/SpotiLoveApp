@@ -6,7 +6,7 @@ namespace SpotiLove;
 public partial class Chats : ContentPage
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl = "https://spotilove-2.onrender.com";
+    private readonly string _apiBaseUrl = "https://spotilove.danielnaz.com";
     private ObservableCollection<ChatViewModel> _allChats = new();
     private ObservableCollection<ChatViewModel> _filteredChats = new();
 

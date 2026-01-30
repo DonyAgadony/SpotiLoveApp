@@ -54,7 +54,7 @@ public class SpotifyAuthHandler
             // Fetch full user profile from API
             Debug.WriteLine("🌐 Fetching user profile from API...");
             using var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri("https://spotilove-2.onrender.com");
+            httpClient.BaseAddress = new Uri("https://spotilove.danielnaz.com");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
 
             var response = await httpClient.GetAsync($"/users/{userId}");
@@ -208,7 +208,7 @@ public class SpotifyAuthHandler
         }
     }
 
-    // ✅ Safe method to navigate without depending on Shell.Current
+    // Safe method to navigate without depending on Shell.Current
     private static async Task SafeNavigate(Func<Task> navigationAction)
     {
         try

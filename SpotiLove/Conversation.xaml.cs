@@ -8,7 +8,7 @@ public partial class Conversation : ContentPage
 {
     private readonly ChatViewModel _chat;
     private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl = "https://spotilove-2.onrender.com";
+    private readonly string _apiBaseUrl = "https://spotilove.danielnaz.com";
     private ObservableCollection<MessageViewModel> _messages = new();
 
     public Conversation(ChatViewModel chat)

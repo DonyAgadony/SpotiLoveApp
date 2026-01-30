@@ -10,7 +10,7 @@ namespace SpotiLove;
 public partial class Login : ContentPage
 {
     private readonly HttpClient _httpClient;
-    public const string API_BASE_URL = "https://spotilove-2.onrender.com";
+    public const string API_BASE_URL = "https://spotilove.danielnaz.com";
 
     public Login()
     {
